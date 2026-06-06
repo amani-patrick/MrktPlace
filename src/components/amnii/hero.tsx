@@ -2,14 +2,17 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { MapPin, Search, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 const HERO_BG = "/images/placeholders/hero.svg";
 
 export function AmniiHero() {
+  const t = useTranslations("hero");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [mode, setMode] = useState<"rent" | "sale">("rent");
   const [location, setLocation] = useState("");
@@ -39,15 +42,14 @@ export function AmniiHero() {
       <div className="relative mx-auto flex max-w-7xl flex-col items-center px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amnii-gold/30 bg-amnii-gold/10 px-4 py-1.5 text-sm font-medium text-amnii-gold">
           <ShieldCheck className="size-4" aria-hidden="true" />
-          Verified listings across Rwanda
+          {t("badge")}
         </div>
 
         <h1 className="max-w-3xl font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-[3.25rem] lg:leading-tight">
-          Discover your next home in Rwanda
+          {t("title")}
         </h1>
         <p className="mt-4 max-w-xl text-base text-white/70 sm:text-lg">
-          Search apartments, houses, and rooms across Kigali and all 30 districts.
-          Contact owners directly — always free.
+          {t("subtitle")}
         </p>
 
         <form
@@ -67,7 +69,7 @@ export function AmniiHero() {
                     : "text-muted-foreground hover:text-amnii-navy",
                 )}
               >
-                {tab === "rent" ? "Rent" : "Buy"}
+                {tab === "rent" ? t("rent") : t("buy")}
               </button>
             ))}
           </div>
@@ -80,7 +82,7 @@ export function AmniiHero() {
               />
               <input
                 type="text"
-                placeholder="District, sector, or area..."
+                placeholder={t("locationPlaceholder")}
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 className="h-12 w-full rounded-xl border border-border bg-white pr-4 pl-10 text-sm outline-none focus:border-amnii-gold focus:ring-2 focus:ring-amnii-gold/20"
@@ -91,19 +93,19 @@ export function AmniiHero() {
               onChange={(e) => setPropertyType(e.target.value)}
               className="h-12 rounded-xl border border-border bg-white px-4 text-sm outline-none focus:border-amnii-gold focus:ring-2 focus:ring-amnii-gold/20 sm:w-44"
             >
-              <option value="">All types</option>
-              <option value="apartment">Apartment</option>
-              <option value="house">House</option>
-              <option value="room">Room</option>
-              <option value="studio">Studio</option>
-              <option value="office">Office</option>
+              <option value="">{t("allTypes")}</option>
+              <option value="apartment">{tCommon("apartment")}</option>
+              <option value="house">{tCommon("house")}</option>
+              <option value="room">{tCommon("room")}</option>
+              <option value="studio">{tCommon("studio")}</option>
+              <option value="office">{tCommon("office")}</option>
             </select>
             <Button
               type="submit"
               className="h-12 gap-2 rounded-xl bg-amnii-gold px-6 font-semibold text-amnii-navy hover:bg-amnii-gold-dark hover:text-white"
             >
               <Search className="size-4" aria-hidden="true" />
-              Search
+              {t("search")}
             </Button>
           </div>
         </form>

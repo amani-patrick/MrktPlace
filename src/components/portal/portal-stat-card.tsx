@@ -4,30 +4,30 @@ interface PortalStatCardProps {
   label: string;
   value: string | number;
   hint?: string;
-  accent?: "blue" | "yellow" | "green";
+  accent?: "navy" | "gold" | "cream";
 }
 
 const accentMap = {
-  blue: "border-rw-blue/30 bg-rw-blue/5 text-rw-blue",
-  yellow: "border-rw-yellow/40 bg-rw-yellow/10 text-foreground",
-  green: "border-rw-green/30 bg-rw-green/5 text-rw-green",
+  navy: "border-amnii-navy/15 bg-white text-amnii-navy",
+  gold: "border-amnii-gold/30 bg-white text-amnii-gold-dark",
+  cream: "border-border bg-amnii-cream/50 text-amnii-navy",
 };
 
 export function PortalStatCard({
   label,
   value,
   hint,
-  accent = "blue",
+  accent = "navy",
 }: PortalStatCardProps) {
   return (
     <div
       className={cn(
-        "rounded-xl border bg-white p-5 shadow-sm",
+        "rounded-2xl border p-5 shadow-sm transition-shadow hover:shadow-md",
         accentMap[accent],
       )}
     >
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 font-heading text-2xl font-bold">{value}</p>
+      <p className="mt-1 font-heading text-2xl font-bold tracking-tight">{value}</p>
       {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   );

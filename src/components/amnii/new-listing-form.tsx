@@ -43,6 +43,8 @@ export function NewListingForm({ agents }: NewListingFormProps) {
     district: "Gasabo",
     sector: "",
     description: "",
+    contactPhone: "",
+    whatsappNumber: "",
     imageUrl:
       "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
   });
@@ -66,6 +68,8 @@ export function NewListingForm({ agents }: NewListingFormProps) {
         listingSource: form.listingSource,
         agentId: form.listingSource === "agent_managed" ? form.agentId : null,
         contactDisplay: form.contactDisplay,
+        contactPhone: form.contactPhone,
+        whatsappNumber: form.whatsappNumber || undefined,
         imageUrl: form.imageUrl,
       });
       if (result?.error) setError(result.error);
@@ -318,10 +322,32 @@ export function NewListingForm({ agents }: NewListingFormProps) {
               placeholder="Describe your property, amenities, and neighborhood..."
               className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-amnii-gold"
             />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-1.5">
+                <span className="text-sm font-medium">Contact phone *</span>
+                <input
+                  type="tel"
+                  value={form.contactPhone}
+                  onChange={(e) => update("contactPhone", e.target.value)}
+                  placeholder="0788 000 000"
+                  required
+                  className="h-11 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold"
+                />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-sm font-medium">WhatsApp (optional)</span>
+                <input
+                  type="tel"
+                  value={form.whatsappNumber}
+                  onChange={(e) => update("whatsappNumber", e.target.value)}
+                  placeholder="Same as phone"
+                  className="h-11 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold"
+                />
+              </label>
+            </div>
             <p className="rounded-lg bg-amnii-cream px-4 py-3 text-sm text-muted-foreground">
-              Your verified phone number will appear on this listing. Seekers contact
-              you{form.listingSource === "agent_managed" ? " or your agent" : ""}{" "}
-              directly — always free, no unlock fees.
+              This number appears on your listing. Seekers contact you directly — free,
+              no unlock fees.
             </p>
           </div>
         ) : null}
@@ -348,7 +374,13 @@ export function NewListingForm({ agents }: NewListingFormProps) {
           ) : (
             <Button
               type="button"
-              disabled={isPending || !form.title || !form.price || !form.sector}
+              disabled={
+                isPending ||
+                !form.title ||
+                !form.price ||
+                !form.sector ||
+                !form.contactPhone
+              }
               className="bg-amnii-navy font-semibold text-white hover:bg-amnii-navy/90"
               onClick={handlePublish}
             >

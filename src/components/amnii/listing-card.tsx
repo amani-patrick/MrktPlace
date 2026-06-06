@@ -1,16 +1,19 @@
+"use client";
+
 import Image from "next/image";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Bath, BedDouble, MapPin, ShieldCheck } from "lucide-react";
 import { getListingImage } from "@/lib/images";
 import { getListingSourceLabel } from "@/lib/listing-contact";
 import { formatListingType, formatPrice } from "@/lib/format";
 import type { Listing } from "@/types";
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 interface AmniiListingCardProps {
   listing: Listing;
   variant?: "default" | "urgent";
-  badge?: string;
+  badge?: "urgent" | "new";
 }
 
 export function AmniiListingCard({
@@ -18,6 +21,7 @@ export function AmniiListingCard({
   variant = "default",
   badge,
 }: AmniiListingCardProps) {
+  const t = useTranslations("listing");
   const isUrgent = variant === "urgent";
   const imageSrc = getListingImage(listing.propertyType, listing.imageUrl);
 
@@ -47,7 +51,7 @@ export function AmniiListingCard({
           <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
             {badge ? (
               <span className="rounded-md bg-red-600 px-2.5 py-1 text-xs font-bold tracking-wide text-white uppercase">
-                {badge}
+                {t(badge)}
               </span>
             ) : null}
             <span className="rounded-md bg-white/95 px-2.5 py-1 text-xs font-semibold capitalize text-amnii-navy">
@@ -61,12 +65,12 @@ export function AmniiListingCard({
                   : "bg-white/95 text-amnii-navy",
               )}
             >
-              {getListingSourceLabel(listing.listingSource)}
+              {getListingSourceLabel(listing.listingSource, t)}
             </span>
             {listing.verificationStatus === "verified" ? (
               <span className="inline-flex items-center gap-1 rounded-md bg-amnii-gold px-2.5 py-1 text-xs font-semibold text-amnii-navy">
                 <ShieldCheck className="size-3" aria-hidden="true" />
-                Verified
+                {t("verified")}
               </span>
             ) : null}
           </div>
@@ -77,7 +81,9 @@ export function AmniiListingCard({
             {formatPrice(listing.price, listing.currency)}
             {listing.listingType === "rent" ||
             listing.listingType === "commercial_rent" ? (
-              <span className="text-sm font-medium text-muted-foreground"> /mo</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                {t("perMonth")}
+              </span>
             ) : null}
           </p>
 

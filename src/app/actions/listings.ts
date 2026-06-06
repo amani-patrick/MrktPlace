@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
+import { redirect } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { contactDisplayForSource } from "@/lib/listing-contact";
 import type { ContactDisplay, ListingSource, PropertyType } from "@/types";
@@ -16,10 +17,20 @@ export interface CreateListingInput {
   bedrooms: number | null;
   district: string;
   sector: string;
+  contactPhone: string;
+  whatsappNumber?: string;
   listingSource: ListingSource;
   agentId: string | null;
   contactDisplay: ContactDisplay;
   imageUrl?: string;
+}
+
+function formatPhone(raw: string) {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("250")) return `+${digits}`;
+  if (digits.startsWith("0")) return `+25${digits}`;
+  if (digits.length === 9) return `+250${digits}`;
+  return raw.startsWith("+") ? raw : `+${digits}`;
 }
 
 export async function createListing(input: CreateListingInput) {
@@ -28,13 +39,17 @@ export async function createListing(input: CreateListingInput) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const locale = await getLocale();
+
   if (!user) {
-    redirect("/login?next=/listings/new");
+    return redirect({
+      href: { pathname: "/login", query: { next: "/listings/new" } },
+      locale,
+    });
   }
 
-  const phone = user.phone ?? user.user_metadata?.phone;
-  if (!phone) {
-    return { error: "Your account must have a verified phone number." };
+  if (!input.contactPhone.trim()) {
+    return { error: "A contact phone number is required on the listing." };
   }
 
   if (input.listingSource === "agent_managed" && !input.agentId) {
@@ -45,6 +60,11 @@ export async function createListing(input: CreateListingInput) {
     input.listingSource,
     input.contactDisplay,
   );
+
+  const phone = formatPhone(input.contactPhone);
+  const whatsapp = input.whatsappNumber
+    ? formatPhone(input.whatsappNumber)
+    : phone;
 
   const { data: listing, error } = await supabase
     .from("listings")
@@ -60,7 +80,7 @@ export async function createListing(input: CreateListingInput) {
       district: input.district,
       sector: input.sector.trim(),
       contact_phone: phone,
-      whatsapp_number: phone,
+      whatsapp_number: whatsapp,
       listing_source: input.listingSource,
       agent_id: input.agentId,
       contact_display: contactDisplay,
@@ -84,5 +104,5 @@ export async function createListing(input: CreateListingInput) {
 
   revalidatePath("/");
   revalidatePath("/search");
-  redirect(`/listings/${listing.id}`);
+  redirect({ href: `/listings/${listing.id}`, locale });
 }

@@ -15,6 +15,7 @@ export interface PortalConfig {
   accentClass: string;
   accentBg: string;
   accentRing: string;
+  accentMuted: string;
   nav: PortalNavItem[];
 }
 
@@ -23,9 +24,10 @@ export const PORTAL_CONFIGS: Record<PortalRole, PortalConfig> = {
     role: "seeker",
     title: "Seeker Portal",
     description: "Browse, save, and track properties you're interested in.",
-    accentClass: "text-rw-blue",
-    accentBg: "bg-rw-blue",
-    accentRing: "ring-rw-blue/20",
+    accentClass: "text-amnii-navy",
+    accentBg: "bg-amnii-navy",
+    accentRing: "ring-amnii-navy/15",
+    accentMuted: "bg-amnii-navy/5",
     nav: [
       { label: "Overview", href: "/portal/seeker" },
       { label: "Saved listings", href: "/portal/seeker/favorites" },
@@ -37,9 +39,10 @@ export const PORTAL_CONFIGS: Record<PortalRole, PortalConfig> = {
     role: "owner",
     title: "Owner Portal",
     description: "Manage your listings, track performance, and respond to inquiries.",
-    accentClass: "text-rw-green",
-    accentBg: "bg-rw-green",
-    accentRing: "ring-rw-green/20",
+    accentClass: "text-amnii-gold-dark",
+    accentBg: "bg-amnii-gold",
+    accentRing: "ring-amnii-gold/25",
+    accentMuted: "bg-amnii-gold/10",
     nav: [
       { label: "Overview", href: "/portal/owner" },
       { label: "My listings", href: "/portal/owner/listings" },
@@ -51,9 +54,10 @@ export const PORTAL_CONFIGS: Record<PortalRole, PortalConfig> = {
     role: "agent",
     title: "Agent Portal",
     description: "Manage client listings, build your profile, and track leads.",
-    accentClass: "text-rw-yellow",
-    accentBg: "bg-rw-yellow",
-    accentRing: "ring-rw-yellow/30",
+    accentClass: "text-amnii-navy",
+    accentBg: "bg-amnii-navy",
+    accentRing: "ring-amnii-navy/15",
+    accentMuted: "bg-amnii-cream",
     nav: [
       { label: "Overview", href: "/portal/agent" },
       { label: "Managed listings", href: "/portal/agent/listings" },
@@ -67,25 +71,22 @@ export const PORTAL_OPTIONS = [
   {
     role: "seeker" as const,
     title: "Property Seeker",
-    description: "Save favorites, get alerts, and track your home search.",
+    description: "Save favourites, get alerts, and track your home search.",
     href: "/portal/seeker",
-    color: "border-rw-blue/30 hover:border-rw-blue bg-rw-blue/5",
-    iconColor: "bg-rw-blue text-white",
+    iconBg: "bg-amnii-navy",
   },
   {
     role: "owner" as const,
     title: "Property Owner",
     description: "Post listings, view analytics, and manage inquiries.",
     href: "/portal/owner",
-    color: "border-rw-green/30 hover:border-rw-green bg-rw-green/5",
-    iconColor: "bg-rw-green text-white",
+    iconBg: "bg-amnii-gold text-amnii-navy",
   },
   {
     role: "agent" as const,
     title: "Agent / Commissioner",
     description: "Manage multiple listings and grow your reputation.",
     href: "/portal/agent",
-    color: "border-rw-yellow/40 hover:border-rw-yellow bg-rw-yellow/10",
-    iconColor: "bg-rw-yellow text-foreground",
+    iconBg: "bg-amnii-navy",
   },
 ];
