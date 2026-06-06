@@ -34,7 +34,7 @@ export default async function SeekerPortalPage() {
     <div>
       <PortalPageHeader
         title={t("seekerWelcome")}
-        description={t("seekerDesc")}
+        description={t("seekerDashboardDesc")}
         action={
           <Link
             href="/search"

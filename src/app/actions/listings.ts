@@ -112,5 +112,6 @@ export async function createListing(input: CreateListingInput) {
 
   revalidatePath("/");
   revalidatePath("/search");
+  revalidatePath(`/listings/${listing.id}`);
   redirect({ href: `/listings/${listing.id}`, locale });
 }

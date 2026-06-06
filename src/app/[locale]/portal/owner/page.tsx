@@ -1,21 +1,34 @@
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { AmniiListingCard } from "@/components/amnii/listing-card";
 import { PortalPageHeader } from "@/components/portal/portal-page-header";
 import { PortalStatCard } from "@/components/portal/portal-stat-card";
 import { buttonVariants } from "@/components/ui/button";
-import { getListings } from "@/lib/data/listings";
+import { getListingsForOwner } from "@/lib/data/listings";
+import { createClient } from "@/lib/supabase/server";
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
-export const metadata = { title: "Owner Portal" };
+export async function generateMetadata() {
+  const t = await getTranslations("portal");
+  return { title: t("ownerOverviewTitle") };
+}
 
 export default async function OwnerPortalPage() {
-  const myListings = (await getListings({ limit: 2 }));
+  const t = await getTranslations("portal");
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const myListings = user ? await getListingsForOwner(user.id) : [];
+  const preview = myListings.slice(0, 2);
+  const activeCount = myListings.filter((l) => l.status === "active").length;
 
   return (
     <div>
       <PortalPageHeader
-        title="Owner dashboard"
-        description="Manage your properties and see how they perform with seekers."
+        title={t("ownerOverviewTitle")}
+        description={t("ownerOverviewDesc")}
         action={
           <Link
             href="/listings/new"
@@ -24,33 +37,42 @@ export default async function OwnerPortalPage() {
               "bg-amnii-gold font-semibold text-amnii-navy hover:bg-amnii-gold-dark hover:text-white",
             )}
           >
-            Post new listing
+            {t("postNewListing")}
           </Link>
         }
       />
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <PortalStatCard label="Active listings" value={4} accent="gold" />
-        <PortalStatCard label="Total views" value="1,284" accent="navy" />
-        <PortalStatCard label="Contacts" value={36} accent="cream" />
-        <PortalStatCard label="Inquiries" value={5} accent="gold" hint="Pending" />
+        <PortalStatCard label={t("statActiveListings")} value={activeCount} accent="gold" />
+        <PortalStatCard label={t("statTotalViews")} value="—" accent="navy" />
+        <PortalStatCard label={t("statContacts")} value="—" accent="cream" />
+        <PortalStatCard
+          label={t("statInquiries")}
+          value="—"
+          accent="gold"
+          hint={t("pendingHint")}
+        />
       </div>
 
       <section className="rounded-2xl border border-border bg-white p-6 shadow-sm">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="font-heading text-lg font-bold text-amnii-navy">Your listings</h2>
+          <h2 className="font-heading text-lg font-bold text-amnii-navy">{t("yourListingsSection")}</h2>
           <Link
             href="/portal/owner/listings"
             className="text-sm font-semibold text-amnii-gold-dark hover:underline"
           >
-            Manage all
+            {t("manageAll")}
           </Link>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2">
-          {myListings.map((listing) => (
-            <AmniiListingCard key={listing.id} listing={listing} />
-          ))}
-        </div>
+        {preview.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("noListingsYet")}</p>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2">
+            {preview.map((listing) => (
+              <AmniiListingCard key={listing.id} listing={listing} />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

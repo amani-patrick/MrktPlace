@@ -71,7 +71,7 @@ export const amniiFaq = [
   {
     question: "Is Amnii free to use?",
     answer:
-      "Yes. Browsing listings and contacting owners or agents is completely free. We do not charge unlock fees or hide phone numbers.",
+      "Yes. Browsing listings and contacting owners or agents is completely free on Amnii.",
   },
   {
     question: "How do I list my property?",

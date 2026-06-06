@@ -51,14 +51,27 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
   const galleryImages = gallery.length > 0 ? gallery : [mainImage];
   const contact = resolveListingContact(listing, t);
   const showAgentReview =
+    listing.status === "active" &&
     listing.listingType === "rent" &&
     listing.listingSource === "agent_managed" &&
     listing.agentId;
 
+  const isOwner = user?.id === listing.ownerId;
+  const isPending = listing.status === "pending";
+
   return (
     <div className="bg-white">
-      <RecordListingView listingId={listing.id} />
+      {listing.status === "active" ? <RecordListingView listingId={listing.id} /> : null}
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {isPending ? (
+          <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+            <p className="font-semibold text-amber-900">{t("pendingReview")}</p>
+            <p className="mt-1 text-sm text-amber-800">{t("pendingReviewDesc")}</p>
+            {isOwner ? (
+              <p className="mt-2 text-xs text-amber-700">{t("pendingOwnerOnly")}</p>
+            ) : null}
+          </div>
+        ) : null}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/search"

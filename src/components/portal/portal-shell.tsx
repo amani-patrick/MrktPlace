@@ -1,11 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ArrowLeft, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { ArrowLeft, Menu, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { usePathname } from "next/navigation";
 import type { PortalConfig } from "@/config/portal";
+import { PORTAL_NAV } from "@/config/portal-nav";
 import { AmniiLogo } from "@/components/amnii/logo";
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 interface PortalShellProps {
@@ -14,8 +16,17 @@ interface PortalShellProps {
 }
 
 export function PortalShell({ config, children }: PortalShellProps) {
+  const t = useTranslations("portal");
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const nav = PORTAL_NAV[config.role];
+
+  const descriptionKey =
+    config.role === "owner"
+      ? "ownerOverviewDesc"
+      : config.role === "agent"
+        ? "agentOverviewDesc"
+        : "seekerOverviewDesc";
 
   return (
     <div className="flex min-h-screen flex-col bg-amnii-cream/40">
@@ -27,7 +38,7 @@ export function PortalShell({ config, children }: PortalShellProps) {
               className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-amnii-navy"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              <span className="hidden sm:inline">Marketplace</span>
+              <span className="hidden sm:inline">{t("marketplace")}</span>
             </Link>
             <span className="hidden h-4 w-px bg-border sm:block" />
             <div className="hidden sm:block">
@@ -43,13 +54,17 @@ export function PortalShell({ config, children }: PortalShellProps) {
                 config.accentClass,
               )}
             >
-              {config.title}
+              {config.role === "seeker"
+                ? t("seeker")
+                : config.role === "owner"
+                  ? t("owner")
+                  : t("agent")}
             </span>
             <Link
               href="/portal"
               className="hidden text-sm font-medium text-muted-foreground hover:text-amnii-navy md:inline"
             >
-              Switch role
+              {t("switchRole")}
             </Link>
             <button
               type="button"
@@ -64,11 +79,11 @@ export function PortalShell({ config, children }: PortalShellProps) {
 
         {mobileOpen ? (
           <nav className="border-t border-border bg-white px-4 py-3 lg:hidden">
-            {config.nav.map((item) => {
+            {nav.map((item) => {
               const isActive =
-                pathname === item.href ||
+                pathname.endsWith(item.href) ||
                 (item.href !== `/portal/${config.role}` &&
-                  pathname.startsWith(item.href));
+                  pathname.includes(item.href));
               return (
                 <Link
                   key={item.href}
@@ -81,7 +96,7 @@ export function PortalShell({ config, children }: PortalShellProps) {
                       : "text-muted-foreground",
                   )}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               );
             })}
@@ -92,11 +107,11 @@ export function PortalShell({ config, children }: PortalShellProps) {
       <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row lg:px-8">
         <aside className="hidden w-56 shrink-0 lg:block">
           <nav className="sticky top-24 space-y-1" aria-label="Portal navigation">
-            {config.nav.map((item) => {
+            {nav.map((item) => {
               const isActive =
-                pathname === item.href ||
+                pathname.endsWith(item.href) ||
                 (item.href !== `/portal/${config.role}` &&
-                  pathname.startsWith(item.href));
+                  pathname.includes(item.href));
 
               return (
                 <Link
@@ -113,7 +128,7 @@ export function PortalShell({ config, children }: PortalShellProps) {
                       : "text-muted-foreground hover:bg-white hover:text-amnii-navy",
                   )}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               );
             })}
@@ -127,13 +142,17 @@ export function PortalShell({ config, children }: PortalShellProps) {
             )}
           >
             <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-              Workspace
+              {t("workspace")}
             </p>
             <p className={cn("mt-1 font-semibold capitalize", config.accentClass)}>
-              {config.role}
+              {config.role === "seeker"
+                ? t("seeker")
+                : config.role === "owner"
+                  ? t("owner")
+                  : t("agent")}
             </p>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              {config.description}
+              {t(descriptionKey)}
             </p>
           </div>
         </aside>

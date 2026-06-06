@@ -174,7 +174,6 @@ export async function getListingById(id: string): Promise<Listing | null> {
       .from("listings")
       .select(listingSelect)
       .eq("id", id)
-      .eq("status", "active")
       .maybeSingle();
 
     if (error || !data) {

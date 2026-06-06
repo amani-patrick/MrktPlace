@@ -31,7 +31,7 @@ export const RWANDA_TRUST_PILLARS = [
   {
     title: "Contact is always free",
     description:
-      "Phone numbers and WhatsApp are visible on every listing. No tokens, no unlock fees — ever.",
+      "Phone numbers and WhatsApp are visible on every listing. Contact landlords and agents directly.",
     color: "blue" as const,
   },
   {
