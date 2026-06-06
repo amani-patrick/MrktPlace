@@ -10,7 +10,12 @@ import { cn } from "@/lib/utils";
 
 const HERO_BG = "/images/placeholders/hero.svg";
 
-export function AmniiHero() {
+interface AmniiHeroProps {
+  displayName?: string | null;
+  welcomeKey?: string | null;
+}
+
+export function AmniiHero({ displayName, welcomeKey }: AmniiHeroProps) {
   const t = useTranslations("hero");
   const tCommon = useTranslations("common");
   const router = useRouter();
@@ -46,10 +51,12 @@ export function AmniiHero() {
         </div>
 
         <h1 className="max-w-3xl font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-[3.25rem] lg:leading-tight">
-          {t("title")}
+          {displayName && welcomeKey
+            ? t(welcomeKey as Parameters<typeof t>[0], { name: displayName })
+            : t("title")}
         </h1>
         <p className="mt-4 max-w-xl text-base text-white/70 sm:text-lg">
-          {t("subtitle")}
+          {displayName ? t("subtitleLoggedIn", { name: displayName }) : t("subtitle")}
         </p>
 
         <form

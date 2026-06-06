@@ -5,6 +5,7 @@ import { getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { contactDisplayForSource } from "@/lib/listing-contact";
+import { checkRateLimit, logAction } from "@/lib/rate-limit";
 import type { ContactDisplay, ListingSource, PropertyType } from "@/types";
 import type { ListingType } from "@/types";
 
@@ -48,8 +49,13 @@ export async function createListing(input: CreateListingInput) {
     });
   }
 
+  const limit = await checkRateLimit(supabase, user.id, "create_listing");
+  if (!limit.allowed) {
+    return { error: "rate_limited" };
+  }
+
   if (!input.contactPhone.trim()) {
-    return { error: "A contact phone number is required on the listing." };
+    return { error: "contact_required" };
   }
 
   if (input.listingSource === "agent_managed" && !input.agentId) {
@@ -84,7 +90,7 @@ export async function createListing(input: CreateListingInput) {
       listing_source: input.listingSource,
       agent_id: input.agentId,
       contact_display: contactDisplay,
-      status: "active",
+      status: "pending",
       verification_status: "unverified",
     })
     .select("id")
@@ -101,6 +107,8 @@ export async function createListing(input: CreateListingInput) {
       sort_order: 0,
     });
   }
+
+  await logAction(supabase, user.id, "create_listing");
 
   revalidatePath("/");
   revalidatePath("/search");

@@ -31,6 +31,7 @@ export const PORTAL_CONFIGS: Record<PortalRole, PortalConfig> = {
     nav: [
       { label: "Overview", href: "/portal/seeker" },
       { label: "Saved listings", href: "/portal/seeker/favorites" },
+      { label: "Preferences", href: "/portal/seeker/preferences" },
       { label: "Notifications", href: "/portal/seeker/notifications" },
       { label: "Recent searches", href: "/portal/seeker/searches" },
     ],

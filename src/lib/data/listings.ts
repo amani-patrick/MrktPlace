@@ -207,6 +207,80 @@ export interface AgentOption {
   agency: string | null;
 }
 
+export async function getListingsForOwner(ownerId: string): Promise<Listing[]> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("listings")
+      .select(listingSelect)
+      .eq("owner_id", ownerId)
+      .order("created_at", { ascending: false });
+
+    if (error || !data?.length) return [];
+    return (data as unknown as DbListing[]).map(mapListing);
+  } catch {
+    return [];
+  }
+}
+
+export async function getListingsForAgent(agentId: string): Promise<Listing[]> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("listings")
+      .select(listingSelect)
+      .eq("agent_id", agentId)
+      .order("created_at", { ascending: false });
+
+    if (error || !data?.length) return [];
+    return (data as unknown as DbListing[]).map(mapListing);
+  } catch {
+    return [];
+  }
+}
+
+export async function getRecentlyViewedListings(
+  viewerId: string,
+  limit = 6,
+): Promise<Listing[]> {
+  try {
+    const supabase = await createClient();
+    const { data: views } = await supabase
+      .from("listing_views")
+      .select("listing_id, created_at")
+      .eq("viewer_id", viewerId)
+      .order("created_at", { ascending: false })
+      .limit(limit * 2);
+
+    if (!views?.length) return [];
+
+    const seen = new Set<string>();
+    const ids: string[] = [];
+    for (const v of views) {
+      if (!seen.has(v.listing_id)) {
+        seen.add(v.listing_id);
+        ids.push(v.listing_id);
+      }
+      if (ids.length >= limit) break;
+    }
+
+    const { data: listings } = await supabase
+      .from("listings")
+      .select(listingSelect)
+      .in("id", ids)
+      .eq("status", "active");
+
+    if (!listings?.length) return [];
+
+    const byId = new Map(
+      (listings as unknown as DbListing[]).map((row) => [row.id, mapListing(row)]),
+    );
+    return ids.map((id) => byId.get(id)).filter((l): l is Listing => Boolean(l));
+  } catch {
+    return [];
+  }
+}
+
 export async function getAgentOptions(): Promise<AgentOption[]> {
   try {
     const supabase = await createClient();

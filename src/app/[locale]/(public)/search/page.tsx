@@ -1,14 +1,15 @@
 import { Suspense } from "react";
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { AmniiListingCard } from "@/components/amnii/listing-card";
 import { AmniiSearchFilters } from "@/components/amnii/search-filters";
 import { getListings } from "@/lib/data/listings";
 import { describeSearch, type SearchFilters as Filters } from "@/lib/search-listings";
+import { Link } from "@/i18n/navigation";
 
-export const metadata = {
-  title: "Find Properties in Rwanda",
-  description: "Search apartments, houses, rooms, and land across Rwanda.",
-};
+export async function generateMetadata() {
+  const t = await getTranslations("search");
+  return { title: t("title"), description: t("title") };
+}
 
 interface SearchPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -35,6 +36,7 @@ function normalizeFilters(
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
+  const t = await getTranslations("search");
   const params = await searchParams;
   const filters = normalizeFilters(params);
   const description = describeSearch(filters);
@@ -61,16 +63,16 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       <div className="border-b border-border/60 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <h1 className="font-heading text-3xl font-bold tracking-tight text-amnii-navy sm:text-4xl">
-            Find Properties in Rwanda
+            {t("title")}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Showing results for{" "}
+            {t("showing")}{" "}
             <span className="font-medium text-foreground">{description}</span>
           </p>
           <p className="mt-1 text-sm font-medium text-amnii-gold-dark">
-            {bedroomFiltered.length}{" "}
-            {bedroomFiltered.length === 1 ? "listing" : "listings"} found · Contact
-            details always visible
+            {bedroomFiltered.length === 1
+              ? t("foundOne")
+              : t("found", { count: bedroomFiltered.length })}
           </p>
         </div>
       </div>
@@ -92,17 +94,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-border bg-white px-6 py-16 text-center">
-                <p className="font-semibold text-amnii-navy">
-                  No listings match your search
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Try removing filters or searching a different district.
-                </p>
+                <p className="font-semibold text-amnii-navy">{t("noResults")}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{t("noResultsHint")}</p>
                 <Link
                   href="/search"
                   className="mt-4 inline-block text-sm font-semibold text-amnii-gold-dark hover:underline"
                 >
-                  View all listings
+                  {t("viewAll")}
                 </Link>
               </div>
             )}

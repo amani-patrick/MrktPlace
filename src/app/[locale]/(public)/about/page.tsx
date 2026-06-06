@@ -7,8 +7,10 @@ import {
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { FaqAccordion } from "@/components/amnii/faq-accordion";
-import { buttonVariants } from "@/components/ui/button";
+import { MessageCircle } from "lucide-react";
 import { amniiConfig } from "@/config/amnii";
+import { siteConfig } from "@/config/site";
+import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +33,7 @@ const safetyTipKeys = [1, 2, 3, 4] as const;
 
 export default async function AboutPage() {
   const t = await getTranslations("about");
+  const tSupport = await getTranslations("support");
   const tFaq = await getTranslations("faq");
 
   const faqItems = faqKeys.map((key) => ({
@@ -186,6 +189,34 @@ export default async function AboutPage() {
           </p>
           <div className="mt-10">
             <FaqAccordion items={faqItems} />
+          </div>
+
+          <div className="mt-12 rounded-2xl border border-amnii-gold/30 bg-amnii-cream/60 p-6 text-center sm:p-8">
+            <p className="text-sm font-semibold tracking-wide text-amnii-gold uppercase">
+              {t("supportLabel")}
+            </p>
+            <h3 className="mt-2 font-heading text-xl font-bold text-amnii-navy">
+              {tSupport("title")}
+            </h3>
+            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              {tSupport("desc")}
+            </p>
+            <p className="mt-1 text-sm font-medium text-amnii-navy">
+              {siteConfig.contact.whatsappDisplay}
+            </p>
+            <a
+              href={`https://wa.me/${siteConfig.contact.whatsapp.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                buttonVariants({ size: "lg" }),
+                "mt-5 inline-flex gap-2 bg-amnii-gold font-semibold text-amnii-navy hover:bg-amnii-gold-dark hover:text-white",
+              )}
+            >
+              <MessageCircle className="size-5" aria-hidden="true" />
+              {tSupport("whatsapp")}
+            </a>
+            <p className="mt-3 text-xs text-muted-foreground">{tSupport("hours")}</p>
           </div>
         </div>
       </section>

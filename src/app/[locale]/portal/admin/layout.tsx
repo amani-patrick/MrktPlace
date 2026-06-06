@@ -6,7 +6,11 @@ import { Link } from "@/i18n/navigation";
 const adminNav = [
   { key: "navOverview", href: "/portal/admin" },
   { key: "navListings", href: "/portal/admin/listings" },
+  { key: "navAgents", href: "/portal/admin/agents" },
   { key: "navReports", href: "/portal/admin/reports" },
+  { key: "navAgentReports", href: "/portal/admin/agent-reports" },
+  { key: "navFeedback", href: "/portal/admin/feedback" },
+  { key: "navSignups", href: "/portal/admin/signups" },
   { key: "navUsers", href: "/portal/admin/users" },
 ] as const;
 

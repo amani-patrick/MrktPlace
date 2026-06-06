@@ -2,9 +2,11 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Mail, ShieldCheck } from "lucide-react";
+import { SignupSurveyFields } from "@/components/auth/signup-survey-fields";
 import { Button } from "@/components/ui/button";
+import type { LookingFor, ReferralSource } from "@/config/signup";
 import { createClient } from "@/lib/supabase/client";
 import { Link, useRouter } from "@/i18n/navigation";
 import { stripLocale } from "@/i18n/path";
@@ -13,16 +15,31 @@ import { cn } from "@/lib/utils";
 function LoginForm() {
   const t = useTranslations("login");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/";
   const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [intent, setIntent] = useState<"seeker" | "owner" | "agent">("seeker");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [referralSource, setReferralSource] = useState<ReferralSource | "">("");
+  const [referralOther, setReferralOther] = useState("");
+  const [primaryDistrict, setPrimaryDistrict] = useState("");
+  const [lookingFor, setLookingFor] = useState<LookingFor | "">("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  function validateSignup(): string | null {
+    if (!referralSource) return t("referralRequired");
+    if (referralSource === "other" && !referralOther.trim()) return t("referralOtherRequired");
+    if (!primaryDistrict) return t("districtRequired");
+    if (intent === "seeker" && !lookingFor) return t("lookingForRequired");
+    return null;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,11 +50,28 @@ function LoginForm() {
     const supabase = createClient();
 
     if (mode === "signup") {
+      const validationError = validateSignup();
+      if (validationError) {
+        setLoading(false);
+        setError(validationError);
+        return;
+      }
+
       const { error: err } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
-          data: { full_name: fullName.trim(), role: "owner" },
+          data: {
+            full_name: fullName.trim(),
+            role: intent,
+            referral_source: referralSource,
+            referral_source_other:
+              referralSource === "other" ? referralOther.trim() : undefined,
+            primary_district: primaryDistrict,
+            looking_for: intent === "seeker" ? lookingFor : undefined,
+            phone: phone.trim() || undefined,
+            locale,
+          },
           emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
         },
       });
@@ -69,11 +103,11 @@ function LoginForm() {
         .eq("id", authData.user.id)
         .maybeSingle();
 
-      if (
-        profile?.role === "admin" &&
-        (destination === "/" || destination.startsWith("/login"))
-      ) {
-        destination = "/portal/admin";
+      if (destination === "/" || destination.startsWith("/login")) {
+        if (profile?.role === "admin") destination = "/portal/admin";
+        else if (profile?.role === "agent") destination = "/portal/agent/onboarding";
+        else if (profile?.role === "owner") destination = "/portal/owner";
+        else if (profile?.role === "seeker") destination = "/portal/seeker/preferences";
       }
     }
 
@@ -91,6 +125,8 @@ function LoginForm() {
           {mode === "signin" ? t("signIn") : t("signUp")}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">{t("subtitle")}</p>
+        <p className="mt-2 text-xs text-muted-foreground">{t("noAccountNeeded")}</p>
+        <p className="mt-1 text-xs font-medium text-amnii-gold-dark">{t("accountBenefits")}</p>
 
         <div className="mt-5 flex rounded-lg bg-muted p-1">
           {(["signin", "signup"] as const).map((tab) => (
@@ -116,17 +152,69 @@ function LoginForm() {
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           {mode === "signup" ? (
-            <label className="block space-y-1.5">
-              <span className="text-sm font-medium">{t("fullName")}</span>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder={t("fullName")}
-                required
-                className="h-11 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold focus:ring-2 focus:ring-amnii-gold/20"
+            <>
+              <fieldset className="space-y-2">
+                <legend className="text-sm font-medium">{t("intentLabel")}</legend>
+                {(
+                  [
+                    { value: "seeker", label: t("intentSeeker"), desc: t("intentSeekerDesc") },
+                    { value: "owner", label: t("intentOwner"), desc: t("intentOwnerDesc") },
+                    { value: "agent", label: t("intentAgent"), desc: t("intentAgentDesc") },
+                  ] as const
+                ).map((option) => (
+                  <label
+                    key={option.value}
+                    className={cn(
+                      "flex cursor-pointer gap-3 rounded-lg border p-3 transition-colors",
+                      intent === option.value
+                        ? "border-amnii-gold bg-amnii-cream/60"
+                        : "border-border hover:border-amnii-gold/50",
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="intent"
+                      value={option.value}
+                      checked={intent === option.value}
+                      onChange={() => setIntent(option.value)}
+                      className="mt-1 accent-amnii-gold"
+                    />
+                    <span>
+                      <span className="block text-sm font-semibold text-amnii-navy">
+                        {option.label}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">{option.desc}</span>
+                    </span>
+                  </label>
+                ))}
+              </fieldset>
+              <label className="block space-y-1.5">
+                <span className="text-sm font-medium">
+                  {t("fullName")} <span className="text-destructive">*</span>
+                </span>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder={t("fullName")}
+                  required
+                  className="h-11 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold focus:ring-2 focus:ring-amnii-gold/20"
+                />
+              </label>
+              <SignupSurveyFields
+                referralSource={referralSource}
+                referralOther={referralOther}
+                primaryDistrict={primaryDistrict}
+                lookingFor={lookingFor}
+                phone={phone}
+                showLookingFor={intent === "seeker"}
+                onReferralSourceChange={setReferralSource}
+                onReferralOtherChange={setReferralOther}
+                onPrimaryDistrictChange={setPrimaryDistrict}
+                onLookingForChange={setLookingFor}
+                onPhoneChange={setPhone}
               />
-            </label>
+            </>
           ) : null}
 
           <label className="block space-y-1.5">

@@ -7,6 +7,8 @@ export const siteConfig = {
   locale: "en-RW",
   contact: {
     email: "hello@amnii.rw",
-    phone: "+250 788 000 000",
+    phone: "+250 795 674 182",
+    whatsapp: "+250795674182",
+    whatsappDisplay: "0795 674 182",
   },
 } as const;

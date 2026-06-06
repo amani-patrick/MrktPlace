@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils";
 
 interface HeaderAuthProps {
   email: string | null;
+  displayName?: string | null;
 }
 
-export function HeaderAuth({ email }: HeaderAuthProps) {
+export function HeaderAuth({ email, displayName }: HeaderAuthProps) {
   const t = useTranslations("nav");
   const router = useRouter();
 
@@ -36,7 +37,9 @@ export function HeaderAuth({ email }: HeaderAuthProps) {
     );
   }
 
-  const display = email.length > 22 ? `${email.slice(0, 20)}…` : email;
+  const label = displayName ?? email;
+  const display =
+    label && label.length > 22 ? `${label.slice(0, 20)}…` : (label ?? "");
 
   return (
     <div className="hidden items-center gap-2 sm:flex">

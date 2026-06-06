@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import {
   AlertTriangle,
   Bath,
@@ -12,12 +12,19 @@ import {
   Ruler,
   ShieldCheck,
 } from "lucide-react";
+import { AgentReviewForm } from "@/components/agents/agent-review-form";
 import { AmniiListingCard } from "@/components/amnii/listing-card";
+import { FavoriteButton } from "@/components/amnii/favorite-button";
+import { ListingReportButton } from "@/components/listings/listing-report-button";
+import { RecordListingView } from "@/components/listings/record-listing-view";
+import { ShareListingButton } from "@/components/listings/share-listing-button";
 import { buttonVariants } from "@/components/ui/button";
 import { getListingById, getListingImages, getListings } from "@/lib/data/listings";
 import { getListingSourceLabel, resolveListingContact } from "@/lib/listing-contact";
 import { formatListingType, formatPrice } from "@/lib/format";
 import { getListingImage } from "@/lib/images";
+import { createClient } from "@/lib/supabase/server";
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 interface ListingDetailPageProps {
@@ -26,26 +33,47 @@ interface ListingDetailPageProps {
 
 export default async function ListingDetailPage({ params }: ListingDetailPageProps) {
   const { id } = await params;
+  const t = await getTranslations("listing");
   const listing = await getListingById(id);
 
   if (!listing) notFound();
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const gallery = await getListingImages(id);
   const allListings = await getListings();
   const related = allListings.filter((l) => l.id !== id).slice(0, 3);
   const mainImage = getListingImage(listing.propertyType, listing.imageUrl);
   const galleryImages = gallery.length > 0 ? gallery : [mainImage];
-  const contact = resolveListingContact(listing);
+  const contact = resolveListingContact(listing, t);
+  const showAgentReview =
+    listing.listingType === "rent" &&
+    listing.listingSource === "agent_managed" &&
+    listing.agentId;
 
   return (
     <div className="bg-white">
+      <RecordListingView listingId={listing.id} />
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <Link
-          href="/search"
-          className="text-sm font-medium text-muted-foreground hover:text-amnii-gold-dark"
-        >
-          ← Back to search
-        </Link>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link
+            href="/search"
+            className="text-sm font-medium text-muted-foreground hover:text-amnii-gold-dark"
+          >
+            {t("backToSearch")}
+          </Link>
+          <div className="flex items-center gap-2">
+            <ShareListingButton title={listing.title} url="" />
+            <FavoriteButton listingId={listing.id} />
+            <ListingReportButton
+              listingId={listing.id}
+              isAuthenticated={Boolean(user)}
+            />
+          </div>
+        </div>
 
         <div className="mt-6 grid gap-8 lg:grid-cols-[3fr_2fr] lg:items-start">
           {/* Left — photos & key facts */}
@@ -83,12 +111,12 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                   {formatListingType(listing.listingType)}
                 </span>
                 <span className="rounded-md bg-amnii-navy/10 px-3 py-1 text-xs font-semibold text-amnii-navy">
-                  {getListingSourceLabel(listing.listingSource)}
+                  {getListingSourceLabel(listing.listingSource, t)}
                 </span>
                 {listing.verificationStatus === "verified" ? (
                   <span className="inline-flex items-center gap-1 rounded-md bg-amnii-gold/20 px-3 py-1 text-xs font-semibold text-amnii-gold-dark">
                     <ShieldCheck className="size-3.5" aria-hidden="true" />
-                    Verified listing
+                    {t("verifiedListing")}
                   </span>
                 ) : null}
               </div>
@@ -104,7 +132,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
               {listing.agentName && listing.listingSource === "agent_managed" ? (
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Listed with {listing.agentName}
+                  {t("listedWith", { name: listing.agentName ?? "" })}
                 </p>
               ) : null}
 
@@ -112,7 +140,9 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 {formatPrice(listing.price, listing.currency)}
                 {listing.listingType === "rent" ||
                 listing.listingType === "commercial_rent" ? (
-                  <span className="text-base font-medium text-muted-foreground"> /month</span>
+                  <span className="text-base font-medium text-muted-foreground">
+                    {t("perMonth")}
+                  </span>
                 ) : null}
               </p>
 
@@ -148,15 +178,15 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
           {/* Right — description fills the space, then contact */}
           <aside className="flex flex-col gap-4 lg:sticky lg:top-24">
             <div className="flex-1 rounded-2xl border border-border bg-amnii-cream/30 p-6">
-              <h2 className="font-heading text-lg font-bold text-amnii-navy">Description</h2>
+              <h2 className="font-heading text-lg font-bold text-amnii-navy">{t("description")}</h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                {listing.description || "No description provided."}
+                {listing.description || t("noDescription")}
               </p>
 
               {listing.features.length > 0 ? (
                 <div className="mt-5 border-t border-border/60 pt-5">
                   <p className="text-xs font-semibold tracking-wide text-amnii-gold uppercase">
-                    Amenities
+                    {t("amenities")}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {listing.features.map((f) => (
@@ -177,7 +207,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 {contact.label}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Free to contact — no unlock fees
+                {t("contactFree")}
               </p>
 
               <div className="mt-5 space-y-3">
@@ -200,7 +230,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                     )}
                   >
                     <MessageCircle className="size-4" aria-hidden="true" />
-                    WhatsApp
+                    {t("whatsapp")}
                   </a>
                 ) : null}
                 {contact.secondary ? (
@@ -230,11 +260,8 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                   aria-hidden="true"
                 />
                 <div>
-                  <p className="text-sm font-semibold text-amber-900">Safety warning</p>
-                  <p className="mt-1 text-sm text-amber-800">
-                    Never send money before visiting in person. Verify the property and
-                    owner before any payment.
-                  </p>
+                  <p className="text-sm font-semibold text-amber-900">{t("safetyWarning")}</p>
+                  <p className="mt-1 text-sm text-amber-800">{t("safetyText")}</p>
                 </div>
               </div>
             </div>
@@ -242,17 +269,25 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         </div>
 
         <section className="mt-10">
-          <h2 className="font-heading text-xl font-bold text-amnii-navy">Location</h2>
+          <h2 className="font-heading text-xl font-bold text-amnii-navy">{t("location")}</h2>
           <div className="mt-3 flex h-48 items-center justify-center rounded-xl border border-dashed border-border bg-amnii-cream/50 text-sm text-muted-foreground">
             {listing.sector}, {listing.district}
           </div>
         </section>
 
+        {showAgentReview ? (
+          <section className="mt-10 max-w-xl">
+            <AgentReviewForm
+              agentId={listing.agentId!}
+              listingId={listing.id}
+              isAuthenticated={Boolean(user)}
+            />
+          </section>
+        ) : null}
+
         {related.length > 0 ? (
           <section className="mt-16 border-t border-border pt-12">
-            <h2 className="font-heading text-2xl font-bold text-amnii-navy">
-              Similar properties
-            </h2>
+            <h2 className="font-heading text-2xl font-bold text-amnii-navy">{t("similar")}</h2>
             <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((l) => (
                 <AmniiListingCard key={l.id} listing={l} />

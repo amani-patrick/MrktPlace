@@ -1,49 +1,55 @@
-import Link from "next/link";
-import { PortalPageHeader } from "@/components/portal/portal-page-header";
+import { getTranslations } from "next-intl/server";
 import { AmniiListingCard } from "@/components/amnii/listing-card";
-import { getListings } from "@/lib/data/listings";
-import { Badge } from "@/components/ui/badge";
+import { PortalPageHeader } from "@/components/portal/portal-page-header";
 import { buttonVariants } from "@/components/ui/button";
-export const metadata = { title: "My Listings" };
+import { getListingsForOwner } from "@/lib/data/listings";
+import { createClient } from "@/lib/supabase/server";
+import { Link } from "@/i18n/navigation";
 
-const listingActions = [
-  { id: "1", status: "active" },
-  { id: "2", status: "active" },
-  { id: "3", status: "paused" },
-  { id: "4", status: "pending" },
-] as const;
+export async function generateMetadata() {
+  const t = await getTranslations("portal");
+  return { title: t("ownerListings") };
+}
 
 export default async function OwnerListingsPage() {
-  const listings = await getListings();
+  const t = await getTranslations("portal");
+  const tNotify = await getTranslations("notifications");
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const listings = user ? await getListingsForOwner(user.id) : [];
+
   return (
     <div>
       <PortalPageHeader
-        title="My listings"
-        description="Create, edit, pause, or remove your property listings."
+        title={t("ownerListings")}
+        description={t("ownerListingsDesc")}
         action={
           <Link href="/listings/new" className={buttonVariants({ size: "sm" })}>
-            Add listing
+            {t("addListing")}
           </Link>
         }
       />
 
-      <div className="mb-6 flex flex-wrap gap-2">
-        {listingActions.map((item) => (
-          <Badge
-            key={item.id}
-            variant={item.status === "active" ? "default" : "secondary"}
-            className="capitalize"
-          >
-            Listing #{item.id}: {item.status}
-          </Badge>
-        ))}
-      </div>
-
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {listings.map((l) => (
-          <AmniiListingCard key={l.id} listing={l} />
-        ))}
-      </div>
+      {listings.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-border bg-white p-8 text-center text-sm text-muted-foreground">
+          {t("noListingsYet")}
+        </p>
+      ) : (
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {listings.map((l) => (
+            <div key={l.id} className="space-y-2">
+              <AmniiListingCard listing={l} />
+              <p className="text-xs capitalize text-muted-foreground">
+                {l.status}
+                {l.status === "pending" ? ` — ${tNotify("listingPending")}` : ""}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

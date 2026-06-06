@@ -82,10 +82,11 @@ export async function getAgents(): Promise<AgentProfile[]> {
          is_verified, rating, rent_count, sale_count, whatsapp, badges,
          response_time_hours, profiles ( full_name )`,
       )
+      .eq("onboarding_status", "approved")
       .order("rent_count", { ascending: false });
 
     if (error) {
-      if (error.code === "PGRST205") return mockAgents;
+      if (error.code === "PGRST205" || error.code === "42703") return mockAgents;
       return mockAgents;
     }
 
