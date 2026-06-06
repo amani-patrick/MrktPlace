@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rwanda Housing Marketplace Platform
+
+Rwanda's most trusted digital housing marketplace — where renters, buyers, landlords, property managers, and commissioners connect directly.
+
+## Vision
+
+Become the default place where people in Rwanda search for housing. Free during growth phase. No hidden contact details. No paywalls.
+
+## Tech Stack
+
+- **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, TanStack Query
+- **Backend:** Supabase (PostgreSQL, Auth, Storage, Realtime, Edge Functions)
+- **Deployment:** Vercel + Supabase Cloud
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- npm
+- A Supabase project (for auth and database — step 2 in development sequence)
+
+### Setup
 
 ```bash
+# Install dependencies
+npm install
+
+# Copy environment variables
+cp .env.example .env.local
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
+| `NEXT_PUBLIC_SITE_URL` | Public site URL for SEO/metadata |
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/              # Next.js App Router pages
+├── components/       # UI and layout components
+│   ├── home/         # Home page sections
+│   ├── layout/       # Header, footer
+│   ├── listings/     # Listing components
+│   └── ui/           # shadcn/ui primitives
+├── config/           # Site config and constants
+├── lib/              # Utilities, Supabase clients, mock data
+├── providers/        # React context providers
+└── types/            # Shared TypeScript types
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Design System
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Inspired by Rwanda's national colors:
 
-## Deploy on Vercel
+| Token | Color | Hex |
+|-------|-------|-----|
+| Primary | Blue | `#00A1DE` |
+| Secondary | Yellow | `#FAD201` |
+| Accent | Green | `#20603D` |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Typography: Inter (body), Geist (headings).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Development Sequence
+
+1. ✅ Project Foundation
+2. Database Design
+3. Authentication
+4. Listing Creation
+5. Listing Discovery
+6. Search & Filters
+7. Favorites
+8. Agent Profiles
+9. Verification System
+10. Notifications
+11. Analytics
+12. Admin Dashboard
+13. SEO
+14. Accessibility
+15. Performance Optimization
+16. Production Deployment
+
+See [AGENT.md](./AGENT.md) for the full product specification.
+
+## Scripts
+
+```bash
+npm run dev      # Start dev server
+npm run build    # Production build
+npm run start    # Start production server
+npm run lint     # Run ESLint
+```
+
+## Principles
+
+- Mobile first
+- Fast on slow networks
+- Trust before revenue
+- Simplicity over complexity
+- Localized for Rwanda
+- Listings first
+- Frictionless discovery
