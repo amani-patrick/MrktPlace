@@ -11,6 +11,7 @@ const ERROR_KEYS: Record<string, string> = {
   suspended: "suspended",
   invalid_rating: "invalidRating",
   contact_required: "contactRequired",
+  ownership_required: "ownershipRequired",
 };
 
 export function friendlyError(t: Translate, code: string): string {

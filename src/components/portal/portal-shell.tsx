@@ -13,13 +13,16 @@ import { cn } from "@/lib/utils";
 interface PortalShellProps {
   config: PortalConfig;
   children: React.ReactNode;
+  /** Hide specific nav links (e.g. recent searches until enough history). */
+  hideNavHrefs?: string[];
 }
 
-export function PortalShell({ config, children }: PortalShellProps) {
+export function PortalShell({ config, children, hideNavHrefs = [] }: PortalShellProps) {
   const t = useTranslations("portal");
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const nav = PORTAL_NAV[config.role];
+  const hidden = new Set(hideNavHrefs);
+  const nav = PORTAL_NAV[config.role].filter((item) => !hidden.has(item.href));
 
   const descriptionKey =
     config.role === "owner"

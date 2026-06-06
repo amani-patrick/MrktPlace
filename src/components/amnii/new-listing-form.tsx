@@ -51,6 +51,7 @@ export function NewListingForm({ agents }: NewListingFormProps) {
     whatsappNumber: "",
     imageUrl:
       "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    ownsProperty: false,
   });
 
   const steps = [
@@ -82,6 +83,7 @@ export function NewListingForm({ agents }: NewListingFormProps) {
         contactPhone: form.contactPhone,
         whatsappNumber: form.whatsappNumber || undefined,
         imageUrl: form.imageUrl,
+        ownsProperty: form.listingSource === "owner_direct" ? form.ownsProperty : undefined,
       });
       if (result?.error) {
         const msg = friendlyError(tNotify, String(result.error));
@@ -179,7 +181,10 @@ export function NewListingForm({ agents }: NewListingFormProps) {
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => update("listingSource", opt.value)}
+                  onClick={() => {
+                    update("listingSource", opt.value);
+                    if (opt.value === "agent_managed") update("ownsProperty", false);
+                  }}
                   className={cn(
                     "rounded-xl border-2 p-4 text-left transition-colors",
                     form.listingSource === opt.value
@@ -192,6 +197,18 @@ export function NewListingForm({ agents }: NewListingFormProps) {
                 </button>
               ))}
             </div>
+
+            {form.listingSource === "owner_direct" ? (
+              <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                {t("ownerDirectTrustTip")}
+              </p>
+            ) : (
+              <p className="rounded-lg border border-amnii-gold/30 bg-amnii-gold/10 px-4 py-3 text-sm text-amnii-navy">
+                {t("agentManagedTrustTip")}
+              </p>
+            )}
+
+            <p className="text-xs text-muted-foreground">{t("agentApplyTip")}</p>
 
             {form.listingSource === "agent_managed" ? (
               <div className="space-y-3">
@@ -399,6 +416,17 @@ export function NewListingForm({ agents }: NewListingFormProps) {
             <p className="rounded-lg bg-amnii-cream px-4 py-3 text-sm text-muted-foreground">
               {t("contactHint")}
             </p>
+            {form.listingSource === "owner_direct" ? (
+              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={form.ownsProperty}
+                  onChange={(e) => update("ownsProperty", e.target.checked)}
+                  className="mt-0.5 size-4 rounded border-border text-amnii-navy"
+                />
+                <span className="text-sm text-amnii-navy">{t("ownerOwnershipLabel")}</span>
+              </label>
+            ) : null}
             <label className="block space-y-1.5">
               <span className="text-sm font-medium">{t("propertyPhotoLabel")}</span>
               <input
@@ -445,7 +473,8 @@ export function NewListingForm({ agents }: NewListingFormProps) {
                 !form.title ||
                 !form.price ||
                 !form.sector ||
-                !form.contactPhone
+                !form.contactPhone ||
+                (form.listingSource === "owner_direct" && !form.ownsProperty)
               }
               className="bg-amnii-navy font-semibold text-white hover:bg-amnii-navy/90"
               onClick={handlePublish}

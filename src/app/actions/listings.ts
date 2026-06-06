@@ -24,6 +24,8 @@ export interface CreateListingInput {
   agentId: string | null;
   contactDisplay: ContactDisplay;
   imageUrl?: string;
+  /** Required for owner-direct listings — seeker confirms they own or may list the property. */
+  ownsProperty?: boolean;
 }
 
 function formatPhone(raw: string) {
@@ -61,6 +63,16 @@ export async function createListing(input: CreateListingInput) {
   if (input.listingSource === "agent_managed" && !input.agentId) {
     return { error: "Select an agent for agent-managed listings." };
   }
+
+  if (input.listingSource === "owner_direct" && !input.ownsProperty) {
+    return { error: "ownership_required" };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
 
   const contactDisplay = contactDisplayForSource(
     input.listingSource,
@@ -109,6 +121,11 @@ export async function createListing(input: CreateListingInput) {
   }
 
   await logAction(supabase, user.id, "create_listing");
+
+  if (profile?.role === "seeker" && input.listingSource === "owner_direct") {
+    await supabase.from("profiles").update({ role: "owner" }).eq("id", user.id);
+    revalidatePath("/portal/owner");
+  }
 
   revalidatePath("/");
   revalidatePath("/search");

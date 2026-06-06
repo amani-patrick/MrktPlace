@@ -19,6 +19,7 @@ const adminNav = [
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const t = await getTranslations("admin");
+  const tPortal = await getTranslations("portal");
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-100">
@@ -30,7 +31,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white"
             >
               <ArrowLeft className="size-4" />
-              <span className="hidden sm:inline">{t("exit")}</span>
+              <span className="hidden sm:inline">{tPortal("marketplace")}</span>
             </Link>
             <span className="flex items-center gap-2 text-sm font-semibold">
               <LayoutDashboard className="size-4 text-amnii-gold" />

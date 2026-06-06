@@ -280,6 +280,9 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 <div>
                   <p className="text-sm font-semibold text-amber-900">{t("safetyWarning")}</p>
                   <p className="mt-1 text-sm text-amber-800">{t("safetyText")}</p>
+                  {listing.listingSource === "owner_direct" ? (
+                    <p className="mt-2 text-sm text-amber-800">{t("ownerDirectSeekerTip")}</p>
+                  ) : null}
                 </div>
               </div>
             </div>

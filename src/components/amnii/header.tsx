@@ -4,10 +4,11 @@ import { amniiNav } from "@/config/amnii";
 import { buttonVariants } from "@/components/ui/button";
 import { getDisplayName } from "@/lib/display-name";
 import { createClient } from "@/lib/supabase/server";
+import type { UserRole } from "@/types";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { AmniiLogo } from "./logo";
-import { HeaderAuth } from "./header-auth";
+import { HeaderAccountMenu } from "./header-account-menu";
 import { HeaderFavorites } from "./header-favorites";
 import { LanguageSwitcher } from "./language-switcher";
 
@@ -21,15 +22,17 @@ export async function AmniiHeader() {
 
   const email = user?.email ?? null;
   let displayName: string | null = null;
+  let role: UserRole | null = null;
 
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("full_name")
+      .select("full_name, role")
       .eq("id", user.id)
       .maybeSingle();
 
     displayName = getDisplayName(profile?.full_name, user.email);
+    role = profile?.role ?? null;
   }
 
   return (
@@ -59,7 +62,7 @@ export async function AmniiHeader() {
           >
             <Bell className="size-5" />
           </button>
-          <HeaderAuth email={email} displayName={displayName} />
+          <HeaderAccountMenu email={email} displayName={displayName} role={role} />
           <Link
             href="/listings/new"
             className={cn(
