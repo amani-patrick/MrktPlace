@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createListing, type CreateListingInput } from "@/app/actions/listings";
+import { DistrictSelect } from "@/components/amnii/district-select";
 import { Button } from "@/components/ui/button";
 import { friendlyError } from "@/lib/notify";
 import { uploadFile } from "@/lib/upload";
@@ -342,15 +343,11 @@ export function NewListingForm({ agents }: NewListingFormProps) {
             </h2>
             <label className="block space-y-1.5">
               <span className="text-sm font-medium">{t("districtLabel")}</span>
-              <select
+              <DistrictSelect
                 value={form.district}
-                onChange={(e) => update("district", e.target.value)}
-                className="h-11 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold"
-              >
-                <option value="Gasabo">Gasabo</option>
-                <option value="Kicukiro">Kicukiro</option>
-                <option value="Nyarugenge">Nyarugenge</option>
-              </select>
+                onChange={(v) => update("district", v)}
+                required
+              />
             </label>
             <label className="block space-y-1.5">
               <span className="text-sm font-medium">{t("sectorLabel")}</span>

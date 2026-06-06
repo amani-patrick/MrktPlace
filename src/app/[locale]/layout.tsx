@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { siteConfig } from "@/config/site";
 import { getFavoriteListingIds } from "@/app/actions/favorites";
+import { VercelAnalytics } from "@/components/analytics/vercel-analytics";
 import { AppProviders } from "@/providers/app-providers";
 import { QueryProvider } from "@/providers/query-provider";
 import { createClient } from "@/lib/supabase/server";
@@ -73,6 +74,7 @@ export default async function LocaleLayout({
               initialFavoriteIds={initialFavoriteIds}
             >
               {children}
+              <VercelAnalytics />
             </AppProviders>
           </QueryProvider>
         </NextIntlClientProvider>

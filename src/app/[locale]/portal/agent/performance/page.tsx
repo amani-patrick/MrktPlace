@@ -1,46 +1,76 @@
+import { getTranslations } from "next-intl/server";
 import { PortalPageHeader } from "@/components/portal/portal-page-header";
 import { PortalStatCard } from "@/components/portal/portal-stat-card";
+import { getAgentListingPerformance } from "@/lib/data/analytics";
+import { createClient } from "@/lib/supabase/server";
 
-const monthlyStats = [
-  { month: "March 2026", views: 1240, leads: 28, listings: 15 },
-  { month: "February 2026", views: 980, leads: 22, listings: 13 },
-  { month: "January 2026", views: 1100, leads: 25, listings: 12 },
-];
+export async function generateMetadata() {
+  const t = await getTranslations("portal");
+  return { title: t("agentPerformance") };
+}
 
-export const metadata = { title: "Performance" };
+export default async function AgentPerformancePage() {
+  const t = await getTranslations("portal");
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export default function AgentPerformancePage() {
+  let agentProfileId: string | null = null;
+  if (user) {
+    const { data: agent } = await supabase
+      .from("agent_profiles")
+      .select("id")
+      .eq("profile_id", user.id)
+      .maybeSingle();
+    agentProfileId = agent?.id ?? null;
+  }
+
+  const rows = agentProfileId ? await getAgentListingPerformance(agentProfileId) : [];
+  const totals = rows.reduce(
+    (acc, r) => ({
+      views: acc.views + r.views,
+      contacts: acc.contacts + r.contacts,
+      favorites: acc.favorites + r.favorites,
+    }),
+    { views: 0, contacts: 0, favorites: 0 },
+  );
+  const conversion =
+    totals.views > 0 ? `${((totals.contacts / totals.views) * 100).toFixed(1)}%` : "—";
+
   return (
     <div>
-      <PortalPageHeader
-        title="Performance metrics"
-        description="Profile reach, lead activity, and listing statistics over time."
-      />
+      <PortalPageHeader title={t("agentPerformance")} description={t("agentPerformanceDesc")} />
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <PortalStatCard label="Profile reach" value="3,420" accent="gold" />
-        <PortalStatCard label="Lead activity" value={28} accent="navy" />
-        <PortalStatCard label="Listing views" value="4,860" accent="cream" />
-        <PortalStatCard label="Conversion rate" value="6.2%" accent="gold" />
+        <PortalStatCard label={t("statViews")} value={totals.views} accent="gold" />
+        <PortalStatCard label={t("statContacts")} value={totals.contacts} accent="navy" />
+        <PortalStatCard label={t("statFavorites")} value={totals.favorites} accent="cream" />
+        <PortalStatCard label={t("statConversion")} value={conversion} accent="gold" />
       </div>
 
       <div className="rounded-xl border border-border/80 bg-white shadow-sm">
         <div className="border-b border-border/60 px-5 py-4">
-          <h2 className="font-semibold">Monthly breakdown</h2>
+          <h2 className="font-semibold">{t("managedListings")}</h2>
         </div>
-        <div className="divide-y divide-border/60">
-          {monthlyStats.map((row) => (
-            <div
-              key={row.month}
-              className="grid grid-cols-2 gap-3 px-5 py-4 sm:grid-cols-4"
-            >
-              <p className="col-span-2 font-medium sm:col-span-1">{row.month}</p>
-              <p className="text-sm text-muted-foreground">{row.views} views</p>
-              <p className="text-sm text-muted-foreground">{row.leads} leads</p>
-              <p className="text-sm text-muted-foreground">{row.listings} listings</p>
-            </div>
-          ))}
-        </div>
+        {rows.length === 0 ? (
+          <p className="px-5 py-8 text-sm text-muted-foreground">{t("noListingsYet")}</p>
+        ) : (
+          <div className="divide-y divide-border/60">
+            {rows.map((listing) => (
+              <div
+                key={listing.id}
+                className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <p className="font-medium">{listing.title}</p>
+                <div className="flex gap-4 text-sm text-muted-foreground">
+                  <span>{listing.views} views</span>
+                  <span>{listing.contacts} leads</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

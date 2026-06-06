@@ -2,10 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
+import { DistrictSelect } from "@/components/amnii/district-select";
 import { saveUserPreferences } from "@/app/actions/preferences";
 import { Button } from "@/components/ui/button";
-
-const DISTRICTS = ["Gasabo", "Kicukiro", "Nyarugenge"] as const;
 const PROPERTY_TYPES = ["apartment", "house", "room", "studio"] as const;
 
 interface PreferencesFormProps {
@@ -32,6 +31,7 @@ export function PreferencesForm({ initial }: PreferencesFormProps) {
     initial?.max_budget ? String(initial.max_budget) : "",
   );
   const [alertsEnabled, setAlertsEnabled] = useState(Boolean(initial?.alerts_enabled));
+  const [districtPick, setDistrictPick] = useState("");
   const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -75,15 +75,22 @@ export function PreferencesForm({ initial }: PreferencesFormProps) {
 
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">{t("districts")}</legend>
+        <DistrictSelect
+          value={districtPick}
+          onChange={(d) => {
+            if (d && !districts.includes(d)) setDistricts([...districts, d]);
+            setDistrictPick("");
+          }}
+        />
         <div className="flex flex-wrap gap-2">
-          {DISTRICTS.map((d) => (
+          {districts.map((d) => (
             <button
               key={d}
               type="button"
-              onClick={() => toggle(districts, d, setDistricts)}
-              className={`rounded-full px-3 py-1 text-sm ${districts.includes(d) ? "bg-amnii-navy text-white" : "border border-border"}`}
+              onClick={() => setDistricts(districts.filter((x) => x !== d))}
+              className="rounded-full bg-amnii-navy px-3 py-1 text-sm text-white"
             >
-              {d}
+              {d} ×
             </button>
           ))}
         </div>

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Mail, ShieldCheck } from "lucide-react";
 import { SignupSurveyFields } from "@/components/auth/signup-survey-fields";
+import { getStoredUtm } from "@/components/analytics/utm-capture";
 import { Button } from "@/components/ui/button";
 import type { LookingFor, ReferralSource } from "@/config/signup";
 import { createClient } from "@/lib/supabase/client";
@@ -57,6 +58,8 @@ function LoginForm() {
         return;
       }
 
+      const utm = getStoredUtm();
+
       const { error: err } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -71,6 +74,9 @@ function LoginForm() {
             looking_for: intent === "seeker" ? lookingFor : undefined,
             phone: phone.trim() || undefined,
             locale,
+            utm_source: utm.utm_source,
+            utm_medium: utm.utm_medium,
+            utm_campaign: utm.utm_campaign,
           },
           emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
         },

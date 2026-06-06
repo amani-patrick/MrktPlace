@@ -56,6 +56,11 @@ export async function toggleFavorite(listingId: string) {
 
   if (error) return { error: error.message };
 
+  await supabase.from("listing_events").insert({
+    event_type: "favorite_added",
+    listing_id: listingId,
+    user_id: user.id,
+  });
   await logAction(supabase, user.id, "favorite_toggle");
   revalidatePath("/portal/seeker/favorites");
   return { saved: true };

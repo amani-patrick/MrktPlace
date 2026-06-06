@@ -11,6 +11,9 @@ const adminNav = [
   { key: "navAgentReports", href: "/portal/admin/agent-reports" },
   { key: "navFeedback", href: "/portal/admin/feedback" },
   { key: "navSignups", href: "/portal/admin/signups" },
+  { key: "navHealth", href: "/portal/admin/health" },
+  { key: "navPricing", href: "/portal/admin/pricing" },
+  { key: "navFlags", href: "/portal/admin/flags" },
   { key: "navUsers", href: "/portal/admin/users" },
 ] as const;
 

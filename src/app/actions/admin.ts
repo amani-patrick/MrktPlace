@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { logAdminAction } from "@/lib/audit";
 import { createClient } from "@/lib/supabase/server";
 
 async function requireAdmin() {
@@ -30,6 +31,9 @@ function revalidateAdmin() {
   revalidatePath("/portal/admin/reports");
   revalidatePath("/portal/admin/agent-reports");
   revalidatePath("/portal/admin/feedback");
+  revalidatePath("/portal/admin/health");
+  revalidatePath("/portal/admin/pricing");
+  revalidatePath("/portal/admin/flags");
   revalidatePath("/portal/admin/users");
   revalidatePath("/search");
 }
@@ -38,13 +42,22 @@ export async function approveListing(listingId: string) {
   const { supabase, error } = await requireAdmin();
   if (error) return { error };
 
+  const { data: score } = await supabase.rpc("compute_listing_quality_score", {
+    p_listing_id: listingId,
+  });
+
   const { error: updateError } = await supabase
     .from("listings")
-    .update({ status: "active", verification_status: "verified" })
+    .update({
+      status: "active",
+      verification_status: "verified",
+      quality_score: score ?? 0,
+    })
     .eq("id", listingId);
 
   if (updateError) return { error: updateError.message };
 
+  await logAdminAction("approve_listing", { type: "listing", id: listingId });
   revalidateAdmin();
   return { success: true };
 }
@@ -60,6 +73,7 @@ export async function rejectListing(listingId: string) {
 
   if (updateError) return { error: updateError.message };
 
+  await logAdminAction("reject_listing", { type: "listing", id: listingId });
   revalidateAdmin();
   return { success: true };
 }
@@ -75,6 +89,7 @@ export async function dismissReport(reportId: string) {
 
   if (updateError) return { error: updateError.message };
 
+  await logAdminAction("dismiss_report", { type: "report", id: reportId });
   revalidateAdmin();
   return { success: true };
 }
@@ -97,6 +112,10 @@ export async function suspendListingFromReport(listingId: string, reportId: stri
 
   if (reportError) return { error: reportError.message };
 
+  await logAdminAction("suspend_listing_from_report", {
+    type: "listing",
+    id: listingId,
+  }, { reportId });
   revalidateAdmin();
   return { success: true };
 }
@@ -116,6 +135,7 @@ export async function suspendUser(userId: string, reason?: string) {
 
   if (updateError) return { error: updateError.message };
 
+  await logAdminAction("suspend_user", { type: "user", id: userId }, { reason });
   revalidateAdmin();
   return { success: true };
 }
@@ -131,6 +151,7 @@ export async function dismissAgentReport(reportId: string) {
 
   if (updateError) return { error: updateError.message };
 
+  await logAdminAction("dismiss_agent_report", { type: "agent_report", id: reportId });
   revalidateAdmin();
   return { success: true };
 }
@@ -165,6 +186,7 @@ export async function suspendAgentFromReport(agentId: string, reportId: string) 
 
   if (reportError) return { error: reportError.message };
 
+  await logAdminAction("suspend_agent_from_report", { type: "agent", id: agentId }, { reportId });
   revalidateAdmin();
   return { success: true };
 }
@@ -184,6 +206,7 @@ export async function unsuspendUser(userId: string) {
 
   if (updateError) return { error: updateError.message };
 
+  await logAdminAction("unsuspend_user", { type: "user", id: userId });
   revalidateAdmin();
   return { success: true };
 }

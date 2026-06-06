@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { POPULAR_DISTRICTS } from "@/config/constants";
+import { DistrictSelect } from "@/components/amnii/district-select";
 import { useRouter } from "@/i18n/navigation";
 
 const propertyTypeKeys = ["", "apartment", "house", "room", "studio", "office", "land"] as const;
@@ -63,21 +63,22 @@ export function AmniiSearchFilters() {
           </select>
         </label>
 
-        <label className="block space-y-1.5">
+        <div className="space-y-1.5">
           <span className="text-sm font-medium text-amnii-navy">{t("district")}</span>
-          <select
+          <DistrictSelect
             value={current.district}
-            onChange={(e) => update("district", e.target.value)}
-            className="h-10 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold"
-          >
-            <option value="">{t("allDistricts")}</option>
-            {POPULAR_DISTRICTS.map((d) => (
-              <option key={d.slug} value={d.slug}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={(v) => update("district", v)}
+          />
+          {current.district ? (
+            <button
+              type="button"
+              onClick={() => update("district", "")}
+              className="text-xs text-amnii-gold-dark hover:underline"
+            >
+              {t("allDistricts")}
+            </button>
+          ) : null}
+        </div>
 
         <label className="block space-y-1.5">
           <span className="text-sm font-medium text-amnii-navy">{t("propertyType")}</span>

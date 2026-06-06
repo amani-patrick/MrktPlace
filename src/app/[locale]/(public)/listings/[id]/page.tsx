@@ -18,6 +18,7 @@ import { FavoriteButton } from "@/components/amnii/favorite-button";
 import { ListingReportButton } from "@/components/listings/listing-report-button";
 import { RecordListingView } from "@/components/listings/record-listing-view";
 import { ShareListingButton } from "@/components/listings/share-listing-button";
+import { TrackContactLink } from "@/components/listings/track-contact-link";
 import { buttonVariants } from "@/components/ui/button";
 import { getListingById, getListingImages, getListings } from "@/lib/data/listings";
 import { getListingSourceLabel, resolveListingContact } from "@/lib/listing-contact";
@@ -66,7 +67,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
             {t("backToSearch")}
           </Link>
           <div className="flex items-center gap-2">
-            <ShareListingButton title={listing.title} url="" />
+            <ShareListingButton title={listing.title} listingId={listing.id} url="" />
             <FavoriteButton listingId={listing.id} />
             <ListingReportButton
               listingId={listing.id}
@@ -211,7 +212,9 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
               </p>
 
               <div className="mt-5 space-y-3">
-                <a
+                <TrackContactLink
+                  listingId={listing.id}
+                  type="contact_phone"
                   href={`tel:${contact.phone}`}
                   className={cn(
                     buttonVariants(),
@@ -220,9 +223,11 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 >
                   <Phone className="size-4" aria-hidden="true" />
                   {contact.phone}
-                </a>
+                </TrackContactLink>
                 {contact.whatsapp ? (
-                  <a
+                  <TrackContactLink
+                    listingId={listing.id}
+                    type="contact_whatsapp"
                     href={`https://wa.me/${contact.whatsapp.replace(/\D/g, "")}`}
                     className={cn(
                       buttonVariants({ variant: "outline" }),
@@ -231,7 +236,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                   >
                     <MessageCircle className="size-4" aria-hidden="true" />
                     {t("whatsapp")}
-                  </a>
+                  </TrackContactLink>
                 ) : null}
                 {contact.secondary ? (
                   <div className="border-t border-border pt-3">

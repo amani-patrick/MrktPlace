@@ -3,16 +3,11 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { BadgeCheck, Star } from "lucide-react";
+import { DistrictSelect } from "@/components/amnii/district-select";
+import { FEATURED_DISTRICTS } from "@/config/districts";
 import type { AgentProfile } from "@/types/agent";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-
-const DISTRICT_TABS = [
-  { id: "all", label: "All" },
-  { id: "gasabo", label: "Gasabo" },
-  { id: "kicukiro", label: "Kicukiro" },
-  { id: "nyarugenge", label: "Nyarugenge" },
-] as const;
 
 interface AgentsDirectoryProps {
   agents: AgentProfile[];
@@ -20,31 +15,47 @@ interface AgentsDirectoryProps {
 
 export function AgentsDirectory({ agents }: AgentsDirectoryProps) {
   const t = useTranslations("agents");
-  const [district, setDistrict] = useState<string>("all");
+  const [district, setDistrict] = useState<string>("");
 
   const filtered = useMemo(() => {
-    if (district === "all") return agents;
-    return agents.filter((a) => a.district.toLowerCase() === district);
+    if (!district) return agents;
+    return agents.filter((a) => a.district.toLowerCase() === district.toLowerCase());
   }, [agents, district]);
 
   return (
     <>
-      <div className="mb-6 flex flex-wrap gap-2">
-        {DISTRICT_TABS.map((tab) => (
+      <div className="mb-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setDistrict("")}
+          className={cn(
+            "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+            !district
+              ? "bg-amnii-navy text-white"
+              : "border border-border bg-white text-muted-foreground hover:border-amnii-gold",
+          )}
+        >
+          {t("allAgentsNationwide")}
+        </button>
+        {FEATURED_DISTRICTS.map((d) => (
           <button
-            key={tab.id}
+            key={d.slug}
             type="button"
-            onClick={() => setDistrict(tab.id)}
+            onClick={() => setDistrict(d.name)}
             className={cn(
               "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-              district === tab.id
+              district === d.name
                 ? "bg-amnii-navy text-white"
                 : "border border-border bg-white text-muted-foreground hover:border-amnii-gold",
             )}
           >
-            {tab.label}
+            {d.name}
           </button>
         ))}
+      </div>
+
+      <div className="mb-6 max-w-xs">
+        <DistrictSelect value={district} onChange={setDistrict} />
       </div>
 
       {filtered.length === 0 ? (

@@ -1,10 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { DistrictSelect } from "@/components/amnii/district-select";
 import {
   LOOKING_FOR_OPTIONS,
   REFERRAL_SOURCES,
-  SIGNUP_DISTRICTS,
   type LookingFor,
   type ReferralSource,
 } from "@/config/signup";
@@ -91,19 +91,11 @@ export function SignupSurveyFields({
         <span className="text-sm font-medium">
           {t("districtLabel")} <span className="text-destructive">*</span>
         </span>
-        <select
+        <DistrictSelect
           value={primaryDistrict}
-          onChange={(e) => onPrimaryDistrictChange(e.target.value)}
+          onChange={onPrimaryDistrictChange}
           required
-          className="h-11 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold focus:ring-2 focus:ring-amnii-gold/20"
-        >
-          <option value="">{t("districtPlaceholder")}</option>
-          {SIGNUP_DISTRICTS.map((district) => (
-            <option key={district} value={district}>
-              {district}
-            </option>
-          ))}
-        </select>
+        />
         <p className="text-xs text-muted-foreground">{t("districtHint")}</p>
       </label>
 

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
+import { SearchTracker } from "@/components/analytics/search-tracker";
 import { AmniiListingCard } from "@/components/amnii/listing-card";
 import { AmniiSearchFilters } from "@/components/amnii/search-filters";
 import { getListings } from "@/lib/data/listings";
@@ -60,6 +61,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   return (
     <div className="bg-amnii-cream min-h-screen">
+      <Suspense fallback={null}>
+        <SearchTracker />
+      </Suspense>
       <div className="border-b border-border/60 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <h1 className="font-heading text-3xl font-bold tracking-tight text-amnii-navy sm:text-4xl">

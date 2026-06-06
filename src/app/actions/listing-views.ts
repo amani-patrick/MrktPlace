@@ -12,4 +12,10 @@ export async function recordListingView(listingId: string) {
     listing_id: listingId,
     viewer_id: user?.id ?? null,
   });
+
+  await supabase.from("listing_events").insert({
+    event_type: "listing_viewed",
+    listing_id: listingId,
+    user_id: user?.id ?? null,
+  });
 }

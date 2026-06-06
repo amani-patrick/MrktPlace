@@ -112,6 +112,8 @@ const listingSelect = `
   agent_profiles ( id, whatsapp, profiles ( full_name, phone ) )
 `;
 
+// Future: sort results with sortByRankingScore() from @/lib/ranking when sort=relevance
+
 export async function getListings(options?: {
   limit?: number;
   verifiedOnly?: boolean;

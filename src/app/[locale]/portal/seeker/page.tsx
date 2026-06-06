@@ -3,7 +3,9 @@ import { AmniiListingCard } from "@/components/amnii/listing-card";
 import { PortalPageHeader } from "@/components/portal/portal-page-header";
 import { PortalStatCard } from "@/components/portal/portal-stat-card";
 import { buttonVariants } from "@/components/ui/button";
+import { getPendingRentalPrompt } from "@/app/actions/rental-outcome";
 import { getUserPreferences } from "@/app/actions/preferences";
+import { RentalOutcomePrompt } from "@/components/analytics/rental-outcome-prompt";
 import { getFavoriteListings } from "@/lib/data/favorites";
 import { getRecentlyViewedListings } from "@/lib/data/listings";
 import { createClient } from "@/lib/supabase/server";
@@ -26,6 +28,7 @@ export default async function SeekerPortalPage() {
   const recent = user ? await getRecentlyViewedListings(user.id, 3) : [];
   const prefs = await getUserPreferences();
   const alertsOn = Boolean(prefs?.alerts_enabled);
+  const rentalPrompt = user ? await getPendingRentalPrompt(user.id) : null;
 
   return (
     <div>
@@ -44,6 +47,16 @@ export default async function SeekerPortalPage() {
           </Link>
         }
       />
+
+      {rentalPrompt ? (
+        <div className="mb-8">
+          <RentalOutcomePrompt
+            listingId={rentalPrompt.listingId}
+            listingTitle={rentalPrompt.listingTitle}
+            agentId={rentalPrompt.agentId}
+          />
+        </div>
+      ) : null}
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <PortalStatCard label={t("savedCount")} value={favorites.length} accent="navy" />
