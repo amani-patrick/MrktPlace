@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { AmniiLogo } from "./logo";
 import { HeaderAccountMenu } from "./header-account-menu";
 import { HeaderFavorites } from "./header-favorites";
+import { HeaderMobileMenu } from "./header-mobile-menu";
 import { LanguageSwitcher } from "./language-switcher";
 
 export async function AmniiHeader() {
@@ -52,25 +53,38 @@ export async function AmniiHeader() {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-3">
           <LanguageSwitcher className="hidden sm:inline-flex" />
           <HeaderFavorites />
-          <button
-            type="button"
-            className="hidden rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-amnii-navy sm:inline-flex"
-            aria-label={tCommon("notifications")}
-          >
-            <Bell className="size-5" />
-          </button>
+          {email ? (
+            <Link
+              href="/portal/seeker/notifications"
+              className="hidden rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-amnii-navy sm:inline-flex"
+              aria-label={tCommon("notifications")}
+            >
+              <Bell className="size-5" />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className="hidden rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-amnii-navy sm:inline-flex"
+              aria-label={tCommon("notifications")}
+              disabled
+            >
+              <Bell className="size-5 opacity-40" />
+            </button>
+          )}
           <HeaderAccountMenu email={email} displayName={displayName} role={role} />
+          <HeaderMobileMenu isAuthenticated={Boolean(email)} role={role} />
           <Link
             href="/listings/new"
             className={cn(
               buttonVariants({ size: "sm" }),
-              "bg-amnii-gold font-semibold text-amnii-navy hover:bg-amnii-gold-dark hover:text-white",
+              "shrink-0 bg-amnii-gold px-2.5 font-semibold text-amnii-navy hover:bg-amnii-gold-dark hover:text-white sm:px-3",
             )}
           >
-            {t("listProperty")}
+            <span className="hidden min-[400px]:inline">{t("listProperty")}</span>
+            <span className="min-[400px]:hidden">{t("listPropertyShort")}</span>
           </Link>
         </div>
       </div>
