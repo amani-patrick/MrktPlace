@@ -289,25 +289,31 @@ export async function getPriceIntelligence(): Promise<PriceInsightRow[]> {
 }
 
 export async function getScamFlags(): Promise<ScamFlagRow[]> {
-  const supabase = await getSupabase();
+  try {
+    const supabase = await getSupabase();
 
-  const { data } = await supabase
-    .from("platform_flags")
-    .select("id, flag_type, entity_type, entity_id, score, reason, status, created_at")
-    .eq("status", "open")
-    .order("score", { ascending: false })
-    .limit(50);
+    const { data, error } = await supabase
+      .from("platform_flags")
+      .select("id, flag_type, entity_type, entity_id, score, reason, status, created_at")
+      .eq("status", "open")
+      .order("score", { ascending: false })
+      .limit(50);
 
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    flagType: row.flag_type,
-    entityType: row.entity_type,
-    entityId: row.entity_id,
-    score: row.score,
-    reason: row.reason,
-    status: row.status,
-    createdAt: row.created_at,
-  }));
+    if (error || !data) return [];
+
+    return data.map((row) => ({
+      id: row.id,
+      flagType: row.flag_type ?? "unknown",
+      entityType: row.entity_type ?? "unknown",
+      entityId: row.entity_id ? String(row.entity_id) : "",
+      score: row.score ?? 0,
+      reason: row.reason ?? "",
+      status: row.status ?? "open",
+      createdAt: row.created_at,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export async function runScamDetection(): Promise<number> {

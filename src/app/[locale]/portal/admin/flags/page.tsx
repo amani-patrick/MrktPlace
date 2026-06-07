@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { dismissPlatformFlag, runScamScan } from "@/app/actions/platform-flags";
-import { ActionButton } from "@/components/admin/admin-action-button";
+import { FlagDismissButton, ScamScanButton } from "@/components/admin/admin-actions";
 import { getScamFlags } from "@/lib/data/analytics";
 
 export const metadata = { title: "Admin — Flags" };
@@ -17,7 +16,7 @@ export default async function AdminFlagsPage() {
             <h1 className="font-heading text-xl font-bold text-slate-900">{t("flagsTitle")}</h1>
             <p className="mt-1 text-sm text-slate-500">{t("flagsDesc")}</p>
           </div>
-          <ActionButton label={t("flagsScan")} onClick={() => runScamScan()} />
+          <ScamScanButton label={t("flagsScan")} />
         </div>
       </div>
 
@@ -38,14 +37,11 @@ export default async function AdminFlagsPage() {
                 </p>
                 <p className="mt-1 text-sm text-slate-600">{flag.reason}</p>
                 <p className="mt-1 text-xs text-slate-500">
-                  {flag.entityType} · {flag.entityId.slice(0, 8)}…
+                  {flag.entityType}
+                  {flag.entityId ? ` · ${flag.entityId.slice(0, 8)}…` : null}
                 </p>
               </div>
-              <ActionButton
-                label={t("flagsDismiss")}
-                variant="outline"
-                onClick={() => dismissPlatformFlag(flag.id)}
-              />
+              <FlagDismissButton flagId={flag.id} label={t("flagsDismiss")} />
             </div>
           ))}
         </div>

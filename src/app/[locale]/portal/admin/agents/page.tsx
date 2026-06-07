@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { approveAgent, rejectAgent } from "@/app/actions/agent-onboarding";
-import { ActionButton } from "@/components/admin/admin-action-button";
+import { AgentOnboardingActions } from "@/components/admin/admin-actions";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Admin — Agents" };
@@ -58,16 +57,12 @@ export default async function AdminAgentsPage() {
                     {t("viewId")}
                   </a>
                 </p>
-                <div className="mt-3 flex gap-2">
-                  <ActionButton
-                    label={t("approveAgent")}
-                    variant="approve"
-                    onClick={() => approveAgent(agent.id)}
-                  />
-                  <ActionButton
-                    label={t("rejectAgent")}
-                    variant="reject"
-                    onClick={() => rejectAgent(agent.id, "Documents did not pass review")}
+                <div className="mt-3">
+                  <AgentOnboardingActions
+                    agentId={agent.id}
+                    approveLabel={t("approveAgent")}
+                    rejectLabel={t("rejectAgent")}
+                    rejectReason="Documents did not pass review"
                   />
                 </div>
               </div>
