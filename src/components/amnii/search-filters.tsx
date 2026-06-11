@@ -1,12 +1,28 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
+import { Search } from "lucide-react";
 import { DistrictSelect } from "@/components/amnii/district-select";
+import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
 
 const propertyTypeKeys = ["", "apartment", "house", "room", "studio", "office", "land"] as const;
 const bedroomOptions = ["", "1", "2", "3", "4+"];
+
+function readFilters(searchParams: URLSearchParams) {
+  return {
+    q: searchParams.get("q") ?? "",
+    type: searchParams.get("type") ?? "",
+    district: searchParams.get("district") ?? "",
+    property: searchParams.get("property") ?? "",
+    bedrooms: searchParams.get("bedrooms") ?? "",
+    minPrice: searchParams.get("minPrice") ?? "",
+    maxPrice: searchParams.get("maxPrice") ?? "",
+    verified: searchParams.get("verified") === "true",
+  };
+}
 
 export function AmniiSearchFilters() {
   const t = useTranslations("search");
@@ -14,24 +30,48 @@ export function AmniiSearchFilters() {
   const tHero = useTranslations("hero");
   const router = useRouter();
   const searchParams = useSearchParams();
+  const paramsKey = searchParams.toString();
 
-  function update(key: string, value: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) params.set(key, value);
-    else params.delete(key);
-    router.push(`/search?${params.toString()}`);
+  const [filters, setFilters] = useState(() => readFilters(searchParams));
+
+  useEffect(() => {
+    setFilters(readFilters(searchParams));
+  }, [paramsKey, searchParams]);
+
+  function setField<K extends keyof typeof filters>(key: K, value: (typeof filters)[K]) {
+    setFilters((prev) => ({ ...prev, [key]: value }));
   }
 
-  const current = {
-    type: searchParams.get("type") ?? "",
-    property: searchParams.get("property") ?? "",
-    district: searchParams.get("district") ?? "",
-    bedrooms: searchParams.get("bedrooms") ?? "",
-    minPrice: searchParams.get("minPrice") ?? "",
-    maxPrice: searchParams.get("maxPrice") ?? "",
-    verified: searchParams.get("verified") ?? "",
-    q: searchParams.get("q") ?? "",
-  };
+  function applyFilters(event?: React.FormEvent) {
+    event?.preventDefault();
+    const params = new URLSearchParams();
+
+    if (filters.q.trim()) params.set("q", filters.q.trim());
+    if (filters.type) params.set("type", filters.type);
+    if (filters.district) params.set("district", filters.district);
+    if (filters.property) params.set("property", filters.property);
+    if (filters.bedrooms) params.set("bedrooms", filters.bedrooms);
+    if (filters.minPrice) params.set("minPrice", filters.minPrice.replace(/[^\d]/g, ""));
+    if (filters.maxPrice) params.set("maxPrice", filters.maxPrice.replace(/[^\d]/g, ""));
+    if (filters.verified) params.set("verified", "true");
+
+    const qs = params.toString();
+    router.push(qs ? `/search?${qs}` : "/search");
+  }
+
+  function clearFilters() {
+    setFilters({
+      q: "",
+      type: "",
+      district: "",
+      property: "",
+      bedrooms: "",
+      minPrice: "",
+      maxPrice: "",
+      verified: false,
+    });
+    router.push("/search");
+  }
 
   return (
     <aside className="space-y-6 rounded-2xl border border-border/80 bg-white p-5 shadow-sm">
@@ -40,14 +80,15 @@ export function AmniiSearchFilters() {
         <p className="text-sm text-muted-foreground">{t("filtersDesc")}</p>
       </div>
 
-      <div className="space-y-4">
+      <form onSubmit={applyFilters} className="space-y-4">
         <label className="block space-y-1.5">
           <span className="text-sm font-medium text-amnii-navy">{t("location")}</span>
           <input
-            type="text"
-            defaultValue={current.q}
+            type="search"
+            enterKeyHint="search"
+            value={filters.q}
             placeholder={t("locationPlaceholder")}
-            onBlur={(e) => update("q", e.target.value)}
+            onChange={(e) => setField("q", e.target.value)}
             className="h-10 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold focus:ring-2 focus:ring-amnii-gold/20"
           />
         </label>
@@ -55,8 +96,8 @@ export function AmniiSearchFilters() {
         <label className="block space-y-1.5">
           <span className="text-sm font-medium text-amnii-navy">{t("listingType")}</span>
           <select
-            value={current.type}
-            onChange={(e) => update("type", e.target.value)}
+            value={filters.type}
+            onChange={(e) => setField("type", e.target.value)}
             className="h-10 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold"
           >
             <option value="">{t("all")}</option>
@@ -68,13 +109,13 @@ export function AmniiSearchFilters() {
         <div className="space-y-1.5">
           <span className="text-sm font-medium text-amnii-navy">{t("district")}</span>
           <DistrictSelect
-            value={current.district}
-            onChange={(v) => update("district", v)}
+            value={filters.district}
+            onChange={(v) => setField("district", v)}
           />
-          {current.district ? (
+          {filters.district ? (
             <button
               type="button"
-              onClick={() => update("district", "")}
+              onClick={() => setField("district", "")}
               className="text-xs text-amnii-gold-dark hover:underline"
             >
               {t("allDistricts")}
@@ -85,8 +126,8 @@ export function AmniiSearchFilters() {
         <label className="block space-y-1.5">
           <span className="text-sm font-medium text-amnii-navy">{t("propertyType")}</span>
           <select
-            value={current.property}
-            onChange={(e) => update("property", e.target.value)}
+            value={filters.property}
+            onChange={(e) => setField("property", e.target.value)}
             className="h-10 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold"
           >
             <option value="">{tHero("allTypes")}</option>
@@ -101,8 +142,8 @@ export function AmniiSearchFilters() {
         <label className="block space-y-1.5">
           <span className="text-sm font-medium text-amnii-navy">{t("bedrooms")}</span>
           <select
-            value={current.bedrooms}
-            onChange={(e) => update("bedrooms", e.target.value)}
+            value={filters.bedrooms}
+            onChange={(e) => setField("bedrooms", e.target.value)}
             className="h-10 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold"
           >
             {bedroomOptions.map((b) => (
@@ -122,9 +163,10 @@ export function AmniiSearchFilters() {
               <input
                 type="text"
                 inputMode="numeric"
-                defaultValue={current.minPrice}
+                enterKeyHint="search"
+                value={filters.minPrice}
                 placeholder={t("minPricePlaceholder")}
-                onBlur={(e) => update("minPrice", e.target.value.replace(/[^\d]/g, ""))}
+                onChange={(e) => setField("minPrice", e.target.value.replace(/[^\d]/g, ""))}
                 className="h-10 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold focus:ring-2 focus:ring-amnii-gold/20"
               />
             </label>
@@ -133,9 +175,10 @@ export function AmniiSearchFilters() {
               <input
                 type="text"
                 inputMode="numeric"
-                defaultValue={current.maxPrice}
+                enterKeyHint="search"
+                value={filters.maxPrice}
                 placeholder={t("maxPricePlaceholder")}
-                onBlur={(e) => update("maxPrice", e.target.value.replace(/[^\d]/g, ""))}
+                onChange={(e) => setField("maxPrice", e.target.value.replace(/[^\d]/g, ""))}
                 className="h-10 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold focus:ring-2 focus:ring-amnii-gold/20"
               />
             </label>
@@ -145,21 +188,30 @@ export function AmniiSearchFilters() {
         <label className="flex items-center gap-2.5">
           <input
             type="checkbox"
-            checked={current.verified === "true"}
-            onChange={(e) => update("verified", e.target.checked ? "true" : "")}
+            checked={filters.verified}
+            onChange={(e) => setField("verified", e.target.checked)}
             className="size-4 rounded border-border accent-amnii-gold"
           />
           <span className="text-sm font-medium text-amnii-navy">{t("verifiedOnly")}</span>
         </label>
-      </div>
 
-      <button
-        type="button"
-        onClick={() => router.push("/search")}
-        className="w-full rounded-lg border border-border py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
-      >
-        {t("clearFilters")}
-      </button>
+        <div className="sticky bottom-4 z-10 space-y-2 bg-white pt-2 lg:static lg:bottom-auto lg:pt-0">
+          <Button
+            type="submit"
+            className="h-11 w-full gap-2 bg-amnii-gold font-semibold text-amnii-navy hover:bg-amnii-gold-dark hover:text-white"
+          >
+            <Search className="size-4" aria-hidden="true" />
+            {t("applyFilters")}
+          </Button>
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="w-full rounded-lg border border-border py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
+          >
+            {t("clearFilters")}
+          </button>
+        </div>
+      </form>
     </aside>
   );
 }

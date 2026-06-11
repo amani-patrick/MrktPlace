@@ -132,6 +132,7 @@
     "minPricePlaceholder": "e.g. 300000",
     "maxPricePlaceholder": "e.g. 1500000",
     "verifiedOnly": "Verified only",
+    "applyFilters": "Apply filters",
     "clearFilters": "Clear all filters",
     "noResults": "No listings match your search",
     "noResultsHint": "Try removing filters or searching a different district.",
@@ -267,7 +268,6 @@
   "portal": {
     "marketplace": "Marketplace",
     "switchRole": "Switch role",
-    "workspace": "Workspace",
     "chooseTitle": "Choose your workspace",
     "chooseDesc": "Select the portal that matches your role. Sign in to sync your data across devices.",
     "enterPortal": "Enter portal →",

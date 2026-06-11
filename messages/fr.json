@@ -132,6 +132,7 @@
     "minPricePlaceholder": "ex. 300000",
     "maxPricePlaceholder": "ex. 1500000",
     "verifiedOnly": "Vérifiés uniquement",
+    "applyFilters": "Appliquer les filtres",
     "clearFilters": "Effacer les filtres",
     "noResults": "Aucune annonce ne correspond",
     "noResultsHint": "Essayez d'élargir vos critères ou un autre district.",
