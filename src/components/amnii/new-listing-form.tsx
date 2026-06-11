@@ -14,6 +14,7 @@ import {
 import { MAX_ADDITIONAL_LISTING_IMAGES } from "@/config/listings";
 import { useTranslations } from "next-intl";
 import { createListing, type CreateListingInput } from "@/app/actions/listings";
+import { AgentSelect } from "@/components/amnii/agent-select";
 import { DistrictSelect } from "@/components/amnii/district-select";
 import { Button } from "@/components/ui/button";
 import { friendlyError } from "@/lib/notify";
@@ -239,20 +240,12 @@ export function NewListingForm({ agents }: NewListingFormProps) {
               <div className="space-y-3">
                 <label className="block space-y-1.5">
                   <span className="text-sm font-medium">{t("selectAgent")}</span>
-                  <select
+                  <AgentSelect
+                    agents={agents}
                     value={form.agentId}
-                    onChange={(e) => update("agentId", e.target.value)}
+                    onChange={(v) => update("agentId", v)}
                     required
-                    className="h-11 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold"
-                  >
-                    <option value="">{t("chooseAgent")}</option>
-                    {agents.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.name}
-                        {a.agency ? ` — ${a.agency}` : ""}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </label>
                 <label className="block space-y-1.5">
                   <span className="text-sm font-medium">{t("whoContact")}</span>

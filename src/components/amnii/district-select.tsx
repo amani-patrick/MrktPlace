@@ -10,10 +10,19 @@ interface DistrictSelectProps {
   onChange: (value: string) => void;
   required?: boolean;
   className?: string;
+  /** Allow a district name not in the official 30-district list */
+  allowCustom?: boolean;
 }
 
-export function DistrictSelect({ value, onChange, required, className }: DistrictSelectProps) {
+export function DistrictSelect({
+  value,
+  onChange,
+  required,
+  className,
+  allowCustom = false,
+}: DistrictSelectProps) {
   const t = useTranslations("districts");
+  const tSelect = useTranslations("searchableSelect");
 
   const options = useMemo(
     () =>
@@ -22,11 +31,7 @@ export function DistrictSelect({ value, onChange, required, className }: Distric
         label: d.name,
         group: d.province,
         featured: d.featured,
-      })).sort((a, b) => {
-        if (a.featured && !b.featured) return -1;
-        if (!a.featured && b.featured) return 1;
-        return a.label.localeCompare(b.label);
-      }),
+      })),
     [],
   );
 
@@ -38,8 +43,13 @@ export function DistrictSelect({ value, onChange, required, className }: Distric
       placeholder={t("placeholder")}
       searchPlaceholder={t("search")}
       emptyLabel={t("empty")}
+      searchHint={t("featuredHint")}
+      loadMoreLabel={tSelect("loadMore")}
+      useCustomLabel={(v) => tSelect("useCustom", { value: v })}
       required={required}
       className={className}
+      pageSize={8}
+      allowCustom={allowCustom}
     />
   );
 }

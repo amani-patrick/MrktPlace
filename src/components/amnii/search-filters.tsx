@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { DistrictSelect } from "@/components/amnii/district-select";
 import { Button } from "@/components/ui/button";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useRouter } from "@/i18n/navigation";
 
 const propertyTypeKeys = ["", "apartment", "house", "room", "studio", "office", "land"] as const;
@@ -28,11 +29,40 @@ export function AmniiSearchFilters() {
   const t = useTranslations("search");
   const tCommon = useTranslations("common");
   const tHero = useTranslations("hero");
+  const tSelect = useTranslations("searchableSelect");
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramsKey = searchParams.toString();
 
   const [filters, setFilters] = useState(() => readFilters(searchParams));
+
+  const listingTypeOptions = useMemo(
+    () => [
+      { value: "", label: t("all") },
+      { value: "rent", label: tHero("rent") },
+      { value: "sale", label: tHero("buy") },
+    ],
+    [t, tHero],
+  );
+
+  const propertyTypeOptions = useMemo(
+    () => [
+      { value: "", label: tHero("allTypes") },
+      ...propertyTypeKeys
+        .filter(Boolean)
+        .map((key) => ({ value: key, label: tCommon(key) })),
+    ],
+    [tCommon, tHero],
+  );
+
+  const bedroomSelectOptions = useMemo(
+    () =>
+      bedroomOptions.map((b) => ({
+        value: b,
+        label: b ? b : t("any"),
+      })),
+    [t],
+  );
 
   useEffect(() => {
     setFilters(readFilters(searchParams));
@@ -95,15 +125,15 @@ export function AmniiSearchFilters() {
 
         <label className="block space-y-1.5">
           <span className="text-sm font-medium text-amnii-navy">{t("listingType")}</span>
-          <select
+          <SearchableSelect
+            options={listingTypeOptions}
             value={filters.type}
-            onChange={(e) => setField("type", e.target.value)}
-            className="h-10 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold"
-          >
-            <option value="">{t("all")}</option>
-            <option value="rent">{tHero("rent")}</option>
-            <option value="sale">{tHero("buy")}</option>
-          </select>
+            onChange={(v) => setField("type", v)}
+            placeholder={t("all")}
+            searchable={false}
+            pageSize={10}
+            loadMoreLabel={tSelect("loadMore")}
+          />
         </label>
 
         <div className="space-y-1.5">
@@ -125,33 +155,32 @@ export function AmniiSearchFilters() {
 
         <label className="block space-y-1.5">
           <span className="text-sm font-medium text-amnii-navy">{t("propertyType")}</span>
-          <select
+          <SearchableSelect
+            options={propertyTypeOptions}
             value={filters.property}
-            onChange={(e) => setField("property", e.target.value)}
-            className="h-10 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold"
-          >
-            <option value="">{tHero("allTypes")}</option>
-            {propertyTypeKeys.filter(Boolean).map((key) => (
-              <option key={key} value={key}>
-                {tCommon(key)}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setField("property", v)}
+            placeholder={tHero("allTypes")}
+            searchPlaceholder={t("searchPropertyType")}
+            emptyLabel={tSelect("empty")}
+            searchHint={tSelect("searchHint", { total: propertyTypeOptions.length - 1 })}
+            loadMoreLabel={tSelect("loadMore")}
+            pageSize={6}
+          />
         </label>
 
         <label className="block space-y-1.5">
           <span className="text-sm font-medium text-amnii-navy">{t("bedrooms")}</span>
-          <select
+          <SearchableSelect
+            options={bedroomSelectOptions}
             value={filters.bedrooms}
-            onChange={(e) => setField("bedrooms", e.target.value)}
-            className="h-10 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold"
-          >
-            {bedroomOptions.map((b) => (
-              <option key={b} value={b}>
-                {b ? b : t("any")}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setField("bedrooms", v)}
+            placeholder={t("any")}
+            searchPlaceholder={t("searchBedrooms")}
+            emptyLabel={tSelect("empty")}
+            searchable={bedroomSelectOptions.length > 6}
+            pageSize={6}
+            loadMoreLabel={tSelect("loadMore")}
+          />
         </label>
 
         <fieldset className="space-y-2">

@@ -18,11 +18,26 @@ interface SearchableSelectProps {
   placeholder?: string;
   searchPlaceholder?: string;
   emptyLabel?: string;
+  searchHint?: string;
+  loadMoreLabel?: string;
+  useCustomLabel?: (value: string) => string;
   required?: boolean;
   disabled?: boolean;
   className?: string;
   /** When true, show search input inside dropdown */
   searchable?: boolean;
+  /** Items shown per page before "Load more" */
+  pageSize?: number;
+  /** Allow selecting typed text when it does not match an option */
+  allowCustom?: boolean;
+}
+
+function sortOptions(options: SearchableSelectOption[]) {
+  return [...options].sort((a, b) => {
+    if (a.featured && !b.featured) return -1;
+    if (!a.featured && b.featured) return 1;
+    return a.label.localeCompare(b.label);
+  });
 }
 
 export function SearchableSelect({
@@ -32,31 +47,56 @@ export function SearchableSelect({
   placeholder = "Select…",
   searchPlaceholder = "Search…",
   emptyLabel = "No results",
+  searchHint,
+  loadMoreLabel = "Show more",
+  useCustomLabel = (v) => `Use "${v}"`,
   required,
   disabled,
   className,
   searchable = true,
+  pageSize = 8,
+  allowCustom = false,
 }: SearchableSelectProps) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
 
-  const selected = options.find((o) => o.value === value);
+  const selected =
+    options.find((o) => o.value === value) ??
+    (value ? { value, label: value } : undefined);
+
+  const sortedOptions = useMemo(() => sortOptions(options), [options]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) {
-      const featured = options.filter((o) => o.featured);
-      return featured.length > 0 ? featured : options.slice(0, 6);
-    }
-    return options.filter(
+    if (!q) return sortedOptions;
+    return sortedOptions.filter(
       (o) =>
         o.label.toLowerCase().includes(q) ||
         o.value.toLowerCase().includes(q) ||
         (o.group?.toLowerCase().includes(q) ?? false),
     );
-  }, [options, query]);
+  }, [sortedOptions, query]);
+
+  const visibleCount = page * pageSize;
+  const visible = filtered.slice(0, visibleCount);
+  const hasMore = visible.length < filtered.length;
+
+  const trimmedQuery = query.trim();
+  const hasExactMatch =
+    trimmedQuery.length > 0 &&
+    filtered.some(
+      (o) =>
+        o.label.toLowerCase() === trimmedQuery.toLowerCase() ||
+        o.value.toLowerCase() === trimmedQuery.toLowerCase(),
+    );
+  const showCustom = allowCustom && trimmedQuery.length > 0 && !hasExactMatch;
+
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -65,6 +105,13 @@ export function SearchableSelect({
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
+
+  function selectValue(next: string) {
+    onChange(next);
+    setOpen(false);
+    setQuery("");
+    setPage(1);
+  }
 
   return (
     <div ref={rootRef} className={cn("relative", className)}>
@@ -100,7 +147,7 @@ export function SearchableSelect({
       ) : null}
 
       {open ? (
-        <div className="absolute z-50 mt-1 max-h-64 w-full overflow-hidden rounded-lg border border-border bg-white shadow-lg">
+        <div className="absolute z-50 mt-1 max-h-72 w-full overflow-hidden rounded-lg border border-border bg-white shadow-lg">
           {searchable ? (
             <div className="border-b border-border p-2">
               <div className="relative">
@@ -109,37 +156,45 @@ export function SearchableSelect({
                   aria-hidden="true"
                 />
                 <input
-                  type="text"
+                  type="search"
+                  enterKeyHint="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={searchPlaceholder}
-                  className="h-9 w-full rounded-md border border-border pl-8 pr-3 text-sm outline-none focus:border-amnii-gold"
+                  className="h-9 w-full rounded-md border border-border pr-3 pl-8 text-sm outline-none focus:border-amnii-gold"
                   autoFocus
                 />
               </div>
-              {!query ? (
-                <p className="mt-1.5 px-1 text-xs text-muted-foreground">
-                  Type to search all {options.length} options
-                </p>
+              {searchHint ? (
+                <p className="mt-1.5 px-1 text-xs text-muted-foreground">{searchHint}</p>
               ) : null}
             </div>
           ) : null}
 
-          <ul className="max-h-48 overflow-y-auto py-1" role="listbox">
-            {filtered.length === 0 ? (
+          <ul className="max-h-52 overflow-y-auto py-1" role="listbox">
+            {showCustom ? (
+              <li>
+                <button
+                  type="button"
+                  role="option"
+                  onClick={() => selectValue(trimmedQuery)}
+                  className="flex w-full border-b border-border/60 px-3 py-2.5 text-left text-sm font-medium text-amnii-navy hover:bg-amnii-cream/60"
+                >
+                  {useCustomLabel(trimmedQuery)}
+                </button>
+              </li>
+            ) : null}
+
+            {visible.length === 0 && !showCustom ? (
               <li className="px-3 py-2 text-sm text-muted-foreground">{emptyLabel}</li>
             ) : (
-              filtered.map((opt) => (
+              visible.map((opt) => (
                 <li key={opt.value}>
                   <button
                     type="button"
                     role="option"
                     aria-selected={value === opt.value}
-                    onClick={() => {
-                      onChange(opt.value);
-                      setOpen(false);
-                      setQuery("");
-                    }}
+                    onClick={() => selectValue(opt.value)}
                     className={cn(
                       "flex w-full flex-col px-3 py-2 text-left text-sm hover:bg-amnii-cream/60",
                       value === opt.value && "bg-amnii-cream font-medium text-amnii-navy",
@@ -154,6 +209,24 @@ export function SearchableSelect({
               ))
             )}
           </ul>
+
+          {hasMore ? (
+            <div className="border-t border-border p-2">
+              <button
+                type="button"
+                onClick={() => setPage((p) => p + 1)}
+                className="w-full rounded-md py-2 text-sm font-medium text-amnii-navy hover:bg-amnii-cream/60"
+              >
+                {loadMoreLabel}
+              </button>
+            </div>
+          ) : null}
+
+          {filtered.length > 0 && visible.length > 0 ? (
+            <p className="border-t border-border/60 px-3 py-1.5 text-xs text-muted-foreground">
+              {visible.length} / {filtered.length}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

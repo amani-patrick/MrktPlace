@@ -134,6 +134,8 @@
     "verifiedOnly": "Vérifiés uniquement",
     "applyFilters": "Appliquer les filtres",
     "clearFilters": "Effacer les filtres",
+    "searchPropertyType": "Rechercher un type de bien…",
+    "searchBedrooms": "Rechercher chambres…",
     "noResults": "Aucune annonce ne correspond",
     "noResultsHint": "Essayez d'élargir vos critères ou un autre district.",
     "viewAll": "Voir toutes les annonces"
@@ -472,7 +474,13 @@
     "search": "Rechercher les 30 districts…",
     "empty": "Aucun district trouvé",
     "nationwide": "Tout le Rwanda",
-    "featuredHint": "Districts populaires en premier — recherchez parmi les 30"
+    "featuredHint": "Districts populaires en premier — parcourez ou recherchez les 30"
+  },
+  "searchableSelect": {
+    "loadMore": "Afficher plus",
+    "searchHint": "Tapez pour rechercher parmi {total} options",
+    "useCustom": "Utiliser « {value} »",
+    "empty": "Aucun résultat"
   },
   "rentalOutcome": {
     "title": "Avez-vous loué via cet agent ?",
@@ -610,6 +618,8 @@
     "ownerOwnershipLabel": "Je confirme posséder ce bien ou avoir l'autorisation légale de le publier sur Amnii.",
     "selectAgent": "Sélectionnez votre agent",
     "chooseAgent": "Choisir un agent…",
+    "searchAgent": "Rechercher un agent par nom ou agence…",
+    "noAgentFound": "Aucun agent trouvé",
     "whoContact": "Qui doit être contacté ?",
     "contactAgentOnly": "Agent uniquement",
     "contactBoth": "Agent et propriétaire",
