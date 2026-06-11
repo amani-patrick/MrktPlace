@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { logAdminAction } from "@/lib/audit";
+import { syncAgentProfileStats } from "@/lib/data/agent-stats";
 import { createClient } from "@/lib/supabase/server";
 
 async function requireAdmin() {
@@ -42,6 +43,12 @@ export async function approveListing(listingId: string) {
   const { supabase, error } = await requireAdmin();
   if (error) return { error };
 
+  const { data: listing } = await supabase
+    .from("listings")
+    .select("agent_id")
+    .eq("id", listingId)
+    .maybeSingle();
+
   const { data: score } = await supabase.rpc("compute_listing_quality_score", {
     p_listing_id: listingId,
   });
@@ -56,6 +63,12 @@ export async function approveListing(listingId: string) {
     .eq("id", listingId);
 
   if (updateError) return { error: updateError.message };
+
+  if (listing?.agent_id) {
+    await syncAgentProfileStats(supabase, listing.agent_id);
+    revalidatePath("/agents");
+    revalidatePath(`/agents/${listing.agent_id}`);
+  }
 
   await logAdminAction("approve_listing", { type: "listing", id: listingId });
   revalidateAdmin();

@@ -94,7 +94,7 @@ export function AgentsDirectory({ agents }: AgentsDirectoryProps) {
               <div className="mt-4 flex items-center justify-between text-sm">
                 <span className="inline-flex items-center gap-1 font-medium">
                   <Star className="size-3.5 fill-amnii-gold text-amnii-gold" aria-hidden="true" />
-                  {agent.rating}
+                  {agent.rating != null ? agent.rating : t("noRatingYet")}
                 </span>
                 <span className="text-muted-foreground">
                   {t("rentSale", { rent: agent.rentCount, sale: agent.saleCount })}

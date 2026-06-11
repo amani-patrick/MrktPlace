@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { syncAgentProfileStats } from "@/lib/data/agent-stats";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit, logAction } from "@/lib/rate-limit";
 
@@ -56,6 +57,8 @@ export async function submitAgentReview(input: {
   }
 
   await logAction(supabase, user.id, "agent_review");
+  await syncAgentProfileStats(supabase, input.agentId);
+  revalidatePath("/agents");
   revalidatePath(`/agents/${input.agentId}`);
   return { success: true };
 }

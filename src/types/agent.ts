@@ -10,10 +10,11 @@ export interface AgentProfile {
   languages: string[];
   rentCount: number;
   saleCount: number;
+  reviewCount: number;
   agency: string;
   agencyShort: string;
-  rating: number;
-  responseTime: string;
+  rating: number | null;
+  responseTime: string | null;
   phoneVerified: boolean;
   badges: AgentBadge[];
   whatsapp: string;

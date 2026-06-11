@@ -78,11 +78,15 @@ export default async function AgentProfilePage({ params }: AgentProfilePageProps
               <div className="mt-5 flex flex-wrap gap-4">
                 <span className="inline-flex items-center gap-1.5 text-sm font-medium">
                   <Star className="size-4 fill-amnii-gold text-amnii-gold" aria-hidden="true" />
-                  {agent.rating} {t("rating")}
+                  {agent.rating != null
+                    ? `${agent.rating} ${t("rating")}`
+                    : t("noRatingYet")}
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-sm text-white/70">
                   <Timer className="size-4" aria-hidden="true" />
-                  {agent.responseTime} {t("avgResponse")}
+                  {agent.responseTime
+                    ? `${agent.responseTime} ${t("avgResponse")}`
+                    : t("noResponseYet")}
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-sm text-white/70">
                   <Building2 className="size-4" aria-hidden="true" />

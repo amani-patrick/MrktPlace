@@ -1,4 +1,7 @@
-import Link from "next/link";
+"use client";
+
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { BadgeCheck, MessageCircle, Phone } from "lucide-react";
 import { AgentAvatar } from "@/components/agents/agent-avatar";
 import { TRUST_BADGES } from "@/config/trust-badges";
@@ -11,6 +14,7 @@ interface AgentCardProps {
 }
 
 export function AgentCard({ agent, compact = false }: AgentCardProps) {
+  const t = useTranslations("agents");
   const topBadge = agent.badges.includes("trusted_commissioner")
     ? TRUST_BADGES.trusted_commissioner
     : null;
@@ -63,9 +67,11 @@ export function AgentCard({ agent, compact = false }: AgentCardProps) {
               {agent.saleCount} SALE
             </span>
           ) : null}
-          <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-            {agent.responseTime} avg. response
-          </span>
+          {agent.responseTime ? (
+            <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              {agent.responseTime} {t("avgResponse")}
+            </span>
+          ) : null}
         </div>
       </div>
 

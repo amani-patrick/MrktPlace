@@ -1,4 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  computeAgentStatsBatch,
+  formatResponseTime,
+  type AgentComputedStats,
+} from "@/lib/data/agent-stats";
 import { mockAgents } from "@/lib/mock-agents";
 import type { AgentBadge, AgentProfile } from "@/types/agent";
 
@@ -11,12 +16,8 @@ interface DbAgent {
   district: string | null;
   languages: string[];
   is_verified: boolean;
-  rating: number | null;
-  rent_count: number;
-  sale_count: number;
   whatsapp: string | null;
   badges: string[];
-  response_time_hours: number | null;
   profiles: { full_name: string | null } | { full_name: string | null }[] | null;
 }
 
@@ -27,12 +28,6 @@ const AVATAR_COLORS = [
   "from-emerald-700 to-emerald-500",
 ];
 
-function formatResponseTime(hours: number | null): string {
-  if (!hours) return "2h";
-  if (hours < 1) return `${Math.round(hours * 60)}m`;
-  return `${hours}h`;
-}
-
 function getInitials(name: string): string {
   return name
     .split(" ")
@@ -42,15 +37,27 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
-function resolveProfileName(
-  profiles: DbAgent["profiles"],
-): string {
+function resolveProfileName(profiles: DbAgent["profiles"]): string {
   if (!profiles) return "Agent";
   if (Array.isArray(profiles)) return profiles[0]?.full_name ?? "Agent";
   return profiles.full_name ?? "Agent";
 }
 
-function mapAgent(row: DbAgent, index: number): AgentProfile {
+function emptyComputed(): AgentComputedStats {
+  return {
+    rentCount: 0,
+    saleCount: 0,
+    rating: null,
+    reviewCount: 0,
+    responseTimeHours: null,
+  };
+}
+
+function mapAgent(
+  row: DbAgent,
+  index: number,
+  computed: AgentComputedStats,
+): AgentProfile {
   const name = resolveProfileName(row.profiles);
   return {
     id: row.id,
@@ -60,30 +67,29 @@ function mapAgent(row: DbAgent, index: number): AgentProfile {
     servesIn: row.serves_in ?? [],
     district: row.district ?? "gasabo",
     languages: row.languages ?? ["Kinyarwanda", "English"],
-    rentCount: row.rent_count,
-    saleCount: row.sale_count,
+    rentCount: computed.rentCount,
+    saleCount: computed.saleCount,
+    reviewCount: computed.reviewCount,
     agency: row.agency ?? "Independent Agent",
     agencyShort: row.agency_short ?? "IA",
-    rating: row.rating ?? 4.5,
-    responseTime: formatResponseTime(row.response_time_hours),
+    rating: computed.rating,
+    responseTime: formatResponseTime(computed.responseTimeHours),
     phoneVerified: row.is_verified,
     badges: (row.badges ?? []) as AgentBadge[],
     whatsapp: row.whatsapp ?? "+250788000000",
   };
 }
 
+const agentSelect = `id, profile_id, agency, agency_short, serves_in, district, languages,
+  is_verified, whatsapp, badges, profiles ( full_name )`;
+
 export async function getAgents(): Promise<AgentProfile[]> {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("agent_profiles")
-      .select(
-        `id, profile_id, agency, agency_short, serves_in, district, languages,
-         is_verified, rating, rent_count, sale_count, whatsapp, badges,
-         response_time_hours, profiles ( full_name )`,
-      )
-      .eq("onboarding_status", "approved")
-      .order("rent_count", { ascending: false });
+      .select(agentSelect)
+      .eq("onboarding_status", "approved");
 
     if (error) {
       if (error.code === "PGRST205" || error.code === "42703") return mockAgents;
@@ -92,13 +98,37 @@ export async function getAgents(): Promise<AgentProfile[]> {
 
     if (!data?.length) return mockAgents;
 
-    return (data as unknown as DbAgent[]).map(mapAgent);
+    const rows = data as unknown as DbAgent[];
+    const stats = await computeAgentStatsBatch(
+      supabase,
+      rows.map((row) => row.id),
+    );
+
+    return rows
+      .map((row, index) => mapAgent(row, index, stats.get(row.id) ?? emptyComputed()))
+      .sort((a, b) => b.rentCount + b.saleCount - (a.rentCount + a.saleCount));
   } catch {
     return mockAgents;
   }
 }
 
 export async function getAgentById(id: string): Promise<AgentProfile | null> {
-  const agents = await getAgents();
-  return agents.find((a) => a.id === id) ?? null;
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("agent_profiles")
+      .select(agentSelect)
+      .eq("id", id)
+      .eq("onboarding_status", "approved")
+      .maybeSingle();
+
+    if (error || !data) {
+      return mockAgents.find((a) => a.id === id) ?? null;
+    }
+
+    const stats = await computeAgentStatsBatch(supabase, [id]);
+    return mapAgent(data as unknown as DbAgent, 0, stats.get(id) ?? emptyComputed());
+  } catch {
+    return mockAgents.find((a) => a.id === id) ?? null;
+  }
 }

@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { syncAgentProfileStats } from "@/lib/data/agent-stats";
 import { createClient } from "@/lib/supabase/server";
 
 export type ListingEventType =
@@ -32,5 +34,22 @@ export async function trackEvent(
   });
 
   if (error) return { error: error.message };
+
+  if (
+    options?.listingId &&
+    (eventType === "contact_phone" || eventType === "contact_whatsapp")
+  ) {
+    const { data: listing } = await supabase
+      .from("listings")
+      .select("agent_id")
+      .eq("id", options.listingId)
+      .maybeSingle();
+
+    if (listing?.agent_id) {
+      await syncAgentProfileStats(supabase, listing.agent_id);
+      revalidatePath(`/agents/${listing.agent_id}`);
+    }
+  }
+
   return { success: true };
 }
