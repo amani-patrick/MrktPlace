@@ -104,15 +104,15 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
             </div>
 
             {galleryImages.length > 1 ? (
-              <div className="grid grid-cols-3 gap-2">
-                {galleryImages.slice(1, 4).map((src, i) => (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {galleryImages.slice(1).map((src, i) => (
                   <div key={`${src}-${i}`} className="relative aspect-[4/3] overflow-hidden rounded-xl">
                     <Image
                       src={src}
                       alt={`${listing.title} photo ${i + 2}`}
                       fill
                       className="object-cover"
-                      sizes="20vw"
+                      sizes="(max-width: 640px) 50vw, 15vw"
                     />
                   </div>
                 ))}

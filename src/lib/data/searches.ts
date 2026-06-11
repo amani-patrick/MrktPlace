@@ -19,6 +19,8 @@ function metadataToFilters(metadata: Record<string, unknown>): SearchFilters {
     type: str("type"),
     property: str("property"),
     q: str("q"),
+    minPrice: str("minPrice"),
+    maxPrice: str("maxPrice"),
   };
 }
 
@@ -28,14 +30,21 @@ function filtersToHref(filters: SearchFilters): string {
   if (filters.type) params.set("type", filters.type);
   if (filters.property) params.set("property", filters.property);
   if (filters.q) params.set("q", filters.q);
+  if (filters.minPrice) params.set("minPrice", filters.minPrice);
+  if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
   const qs = params.toString();
   return qs ? `/search?${qs}` : "/search";
 }
 
 function filtersKey(filters: SearchFilters): string {
-  return [filters.district ?? "", filters.type ?? "", filters.property ?? "", filters.q ?? ""].join(
-    "|",
-  );
+  return [
+    filters.district ?? "",
+    filters.type ?? "",
+    filters.property ?? "",
+    filters.q ?? "",
+    filters.minPrice ?? "",
+    filters.maxPrice ?? "",
+  ].join("|");
 }
 
 const RECENT_SEARCHES_NAV_MIN = 2;

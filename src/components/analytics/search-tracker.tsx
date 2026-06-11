@@ -19,6 +19,8 @@ export function SearchTracker() {
         type: searchParams.get("type") ?? "",
         property: searchParams.get("property") ?? "",
         q: searchParams.get("q") ?? "",
+        minPrice: searchParams.get("minPrice") ?? "",
+        maxPrice: searchParams.get("maxPrice") ?? "",
       },
     });
   }, [searchParams]);

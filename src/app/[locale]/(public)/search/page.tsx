@@ -4,7 +4,12 @@ import { SearchTracker } from "@/components/analytics/search-tracker";
 import { AmniiListingCard } from "@/components/amnii/listing-card";
 import { AmniiSearchFilters } from "@/components/amnii/search-filters";
 import { getListings } from "@/lib/data/listings";
-import { describeSearch, type SearchFilters as Filters } from "@/lib/search-listings";
+import {
+  applySearchFilters,
+  describeSearch,
+  parsePriceParam,
+  type SearchFilters as Filters,
+} from "@/lib/search-listings";
 import { Link } from "@/i18n/navigation";
 
 export async function generateMetadata() {
@@ -30,6 +35,8 @@ function normalizeFilters(
     property: get("property"),
     district: get("district"),
     bedrooms: get("bedrooms"),
+    minPrice: get("minPrice"),
+    maxPrice: get("maxPrice"),
     verified: get("verified"),
     featured: get("featured"),
     sort: get("sort"),
@@ -42,22 +49,20 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const filters = normalizeFilters(params);
   const description = describeSearch(filters);
 
+  const minPrice = parsePriceParam(filters.minPrice);
+  const maxPrice = parsePriceParam(filters.maxPrice);
+
   const results = await getListings({
     q: filters.q,
     listingType: filters.type,
     propertyType: filters.property,
     district: filters.district,
     verifiedOnly: filters.verified === "true",
+    minPrice,
+    maxPrice,
   });
 
-  const bedroomFiltered =
-    filters.bedrooms && filters.bedrooms !== ""
-      ? results.filter((l) => {
-          if (!l.bedrooms) return false;
-          if (filters.bedrooms === "4+") return l.bedrooms >= 4;
-          return l.bedrooms === Number(filters.bedrooms);
-        })
-      : results;
+  const filtered = applySearchFilters(results, filters);
 
   return (
     <div className="bg-amnii-cream min-h-screen">
@@ -74,9 +79,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             <span className="font-medium text-foreground">{description}</span>
           </p>
           <p className="mt-1 text-sm font-medium text-amnii-gold-dark">
-            {bedroomFiltered.length === 1
+            {filtered.length === 1
               ? t("foundOne")
-              : t("found", { count: bedroomFiltered.length })}
+              : t("found", { count: filtered.length })}
           </p>
         </div>
       </div>
@@ -90,9 +95,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           </Suspense>
 
           <div>
-            {bedroomFiltered.length > 0 ? (
+            {filtered.length > 0 ? (
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                {bedroomFiltered.map((listing) => (
+                {filtered.map((listing) => (
                   <AmniiListingCard key={listing.id} listing={listing} />
                 ))}
               </div>

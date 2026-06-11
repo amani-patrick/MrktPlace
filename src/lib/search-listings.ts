@@ -1,4 +1,6 @@
+import { PLATFORM_CURRENCY } from "@/config/currency";
 import { mockListings } from "@/lib/mock-listings";
+import { formatPrice } from "@/lib/format";
 import type { Listing, ListingType, PropertyType } from "@/types";
 
 export interface SearchFilters {
@@ -7,9 +9,41 @@ export interface SearchFilters {
   property?: string;
   district?: string;
   bedrooms?: string;
+  minPrice?: string;
+  maxPrice?: string;
   verified?: string;
   featured?: string;
   sort?: string;
+}
+
+export function parsePriceParam(value?: string): number | undefined {
+  if (!value?.trim()) return undefined;
+  const n = Number(value.replace(/[^\d]/g, ""));
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
+function matchesBedrooms(listing: Listing, bedrooms: string) {
+  if (!listing.bedrooms) return false;
+  if (bedrooms === "4+") return listing.bedrooms >= 4;
+  return listing.bedrooms === Number(bedrooms);
+}
+
+function matchesPriceRange(listing: Listing, min?: number, max?: number) {
+  if (min != null && listing.price < min) return false;
+  if (max != null && listing.price > max) return false;
+  return true;
+}
+
+/** Client-side filters applied after DB fetch (bedrooms, price, mock data). */
+export function applySearchFilters(listings: Listing[], filters: SearchFilters): Listing[] {
+  const min = parsePriceParam(filters.minPrice);
+  const max = parsePriceParam(filters.maxPrice);
+
+  return listings.filter((listing) => {
+    if (filters.bedrooms && !matchesBedrooms(listing, filters.bedrooms)) return false;
+    if (!matchesPriceRange(listing, min, max)) return false;
+    return true;
+  });
 }
 
 function matchesQuery(listing: Listing, query: string) {
@@ -75,6 +109,12 @@ export function searchListings(filters: SearchFilters): Listing[] {
     results = results.filter((listing) => listing.verificationStatus === "verified");
   }
 
+  const min = parsePriceParam(filters.minPrice);
+  const max = parsePriceParam(filters.maxPrice);
+  if (min != null || max != null) {
+    results = results.filter((listing) => matchesPriceRange(listing, min, max));
+  }
+
   if (filters.sort === "newest") {
     results.sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -92,6 +132,20 @@ export function describeSearch(filters: SearchFilters) {
   if (filters.district) parts.push(filters.district);
   if (filters.q) parts.push(`"${filters.q}"`);
   if (filters.verified === "true") parts.push("verified");
+
+  const min = parsePriceParam(filters.minPrice);
+  const max = parsePriceParam(filters.maxPrice);
+  if (min != null || max != null) {
+    if (min != null && max != null) {
+      parts.push(
+        `${formatPrice(min, PLATFORM_CURRENCY)} – ${formatPrice(max, PLATFORM_CURRENCY)}`,
+      );
+    } else if (min != null) {
+      parts.push(`${formatPrice(min, PLATFORM_CURRENCY)}+`);
+    } else if (max != null) {
+      parts.push(`≤ ${formatPrice(max, PLATFORM_CURRENCY)}`);
+    }
+  }
 
   return parts.length > 0 ? parts.join(" · ") : "all properties";
 }

@@ -121,6 +121,8 @@ export async function getListings(options?: {
   district?: string;
   propertyType?: string;
   q?: string;
+  minPrice?: number;
+  maxPrice?: number;
 }): Promise<Listing[]> {
   try {
     const supabase = await createClient();
@@ -146,6 +148,12 @@ export async function getListings(options?: {
       query = query.or(
         `title.ilike.%${options.q}%,sector.ilike.%${options.q}%,district.ilike.%${options.q}%`,
       );
+    }
+    if (options?.minPrice != null) {
+      query = query.gte("price", options.minPrice);
+    }
+    if (options?.maxPrice != null) {
+      query = query.lte("price", options.maxPrice);
     }
     if (options?.limit) {
       query = query.limit(options.limit);

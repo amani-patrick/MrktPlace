@@ -9,7 +9,9 @@ import {
   FileText,
   MapPin,
   UserCheck,
+  X,
 } from "lucide-react";
+import { MAX_ADDITIONAL_LISTING_IMAGES } from "@/config/listings";
 import { useTranslations } from "next-intl";
 import { createListing, type CreateListingInput } from "@/app/actions/listings";
 import { DistrictSelect } from "@/components/amnii/district-select";
@@ -31,6 +33,7 @@ export function NewListingForm({ agents }: NewListingFormProps) {
   const tNotify = useTranslations("notifications");
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const additionalFileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -51,6 +54,7 @@ export function NewListingForm({ agents }: NewListingFormProps) {
     whatsappNumber: "",
     imageUrl:
       "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    additionalImageUrls: [] as string[],
     ownsProperty: false,
   });
 
@@ -83,6 +87,7 @@ export function NewListingForm({ agents }: NewListingFormProps) {
         contactPhone: form.contactPhone,
         whatsappNumber: form.whatsappNumber || undefined,
         imageUrl: form.imageUrl,
+        additionalImageUrls: form.additionalImageUrls,
         ownsProperty: form.listingSource === "owner_direct" ? form.ownsProperty : undefined,
       });
       if (result?.error) {
@@ -95,7 +100,12 @@ export function NewListingForm({ agents }: NewListingFormProps) {
     });
   }
 
-  async function handleImageUpload(file: File) {
+  async function handleImageUpload(file: File, target: "main" | "additional" = "main") {
+    if (target === "additional" && form.additionalImageUrls.length >= MAX_ADDITIONAL_LISTING_IMAGES) {
+      showToast("error", t("maxPhotosReached"));
+      return;
+    }
+
     setUploading(true);
     const { url, error: uploadError } = await uploadFile(file, "listing-images", "uploads");
     setUploading(false);
@@ -103,8 +113,23 @@ export function NewListingForm({ agents }: NewListingFormProps) {
       showToast("error", tNotify("uploadFailed"));
       return;
     }
-    update("imageUrl", url);
+
+    if (target === "main") {
+      update("imageUrl", url);
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        additionalImageUrls: [...prev.additionalImageUrls, url],
+      }));
+    }
     showToast("success", tNotify("uploadSuccess"));
+  }
+
+  function removeAdditionalImage(index: number) {
+    setForm((prev) => ({
+      ...prev,
+      additionalImageUrls: prev.additionalImageUrls.filter((_, i) => i !== index),
+    }));
   }
 
   return (
@@ -427,22 +452,66 @@ export function NewListingForm({ agents }: NewListingFormProps) {
                 <span className="text-sm text-amnii-navy">{t("ownerOwnershipLabel")}</span>
               </label>
             ) : null}
-            <label className="block space-y-1.5">
-              <span className="text-sm font-medium">{t("propertyPhotoLabel")}</span>
+            <div className="space-y-3 rounded-xl border border-dashed border-border p-4">
+              <div>
+                <p className="text-sm font-medium text-amnii-navy">{t("additionalPhotosTitle")}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{t("additionalPhotosDesc")}</p>
+              </div>
+
+              {form.additionalImageUrls.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {form.additionalImageUrls.map((url, index) => (
+                    <div
+                      key={url}
+                      className="group relative aspect-[4/3] overflow-hidden rounded-lg bg-muted"
+                    >
+                      <Image
+                        src={url}
+                        alt={t("additionalPhotoAlt", { n: index + 1 })}
+                        fill
+                        className="object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeAdditionalImage(index)}
+                        className="absolute top-1.5 right-1.5 inline-flex size-7 items-center justify-center rounded-full bg-black/60 text-white opacity-90 hover:bg-black/80"
+                        aria-label={t("removePhoto")}
+                      >
+                        <X className="size-4" aria-hidden="true" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
               <input
+                ref={additionalFileInputRef}
                 type="file"
                 accept="image/*"
+                className="sr-only"
                 disabled={uploading}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) void handleImageUpload(file);
+                  if (file) void handleImageUpload(file, "additional");
+                  e.target.value = "";
                 }}
-                className="w-full text-sm"
               />
-              {form.imageUrl ? (
-                <p className="text-xs text-amnii-gold-dark">{t("photoReady")}</p>
-              ) : null}
-            </label>
+              {form.additionalImageUrls.length < MAX_ADDITIONAL_LISTING_IMAGES ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploading}
+                  onClick={() => additionalFileInputRef.current?.click()}
+                  className="gap-2"
+                >
+                  <Camera className="size-4" aria-hidden="true" />
+                  {uploading ? t("uploading") : t("addPhoto")}
+                </Button>
+              ) : (
+                <p className="text-xs text-muted-foreground">{t("maxPhotosReached")}</p>
+              )}
+            </div>
           </div>
         ) : null}
 

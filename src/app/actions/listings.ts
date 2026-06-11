@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { PLATFORM_CURRENCY } from "@/config/currency";
+import { MAX_ADDITIONAL_LISTING_IMAGES } from "@/config/listings";
 import { contactDisplayForSource } from "@/lib/listing-contact";
 import { checkRateLimit, logAction } from "@/lib/rate-limit";
 import type { ContactDisplay, ListingSource, PropertyType } from "@/types";
@@ -24,6 +26,8 @@ export interface CreateListingInput {
   agentId: string | null;
   contactDisplay: ContactDisplay;
   imageUrl?: string;
+  /** Optional extra photos (detail page gallery only). Max 4. */
+  additionalImageUrls?: string[];
   /** Required for owner-direct listings — seeker confirms they own or may list the property. */
   ownsProperty?: boolean;
 }
@@ -93,7 +97,7 @@ export async function createListing(input: CreateListingInput) {
       property_type: input.propertyType,
       listing_type: input.listingType,
       price: input.price,
-      currency: "RWF",
+      currency: PLATFORM_CURRENCY,
       bedrooms: input.bedrooms,
       district: input.district,
       sector: input.sector.trim(),
@@ -112,12 +116,19 @@ export async function createListing(input: CreateListingInput) {
     return { error: error.message };
   }
 
-  if (input.imageUrl) {
-    await supabase.from("listing_images").insert({
-      listing_id: listing.id,
-      url: input.imageUrl,
-      sort_order: 0,
-    });
+  const galleryUrls = [
+    input.imageUrl,
+    ...(input.additionalImageUrls ?? []).slice(0, MAX_ADDITIONAL_LISTING_IMAGES),
+  ].filter((url): url is string => Boolean(url?.trim()));
+
+  if (galleryUrls.length > 0) {
+    await supabase.from("listing_images").insert(
+      galleryUrls.map((url, index) => ({
+        listing_id: listing.id,
+        url,
+        sort_order: index,
+      })),
+    );
   }
 
   await logAction(supabase, user.id, "create_listing");

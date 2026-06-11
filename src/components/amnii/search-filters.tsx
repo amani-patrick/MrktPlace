@@ -27,6 +27,8 @@ export function AmniiSearchFilters() {
     property: searchParams.get("property") ?? "",
     district: searchParams.get("district") ?? "",
     bedrooms: searchParams.get("bedrooms") ?? "",
+    minPrice: searchParams.get("minPrice") ?? "",
+    maxPrice: searchParams.get("maxPrice") ?? "",
     verified: searchParams.get("verified") ?? "",
     q: searchParams.get("q") ?? "",
   };
@@ -110,6 +112,35 @@ export function AmniiSearchFilters() {
             ))}
           </select>
         </label>
+
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium text-amnii-navy">{t("priceRange")}</legend>
+          <p className="text-xs text-muted-foreground">{t("priceCurrencyNote")}</p>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block space-y-1">
+              <span className="text-xs text-muted-foreground">{t("minPrice")}</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                defaultValue={current.minPrice}
+                placeholder={t("minPricePlaceholder")}
+                onBlur={(e) => update("minPrice", e.target.value.replace(/[^\d]/g, ""))}
+                className="h-10 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold focus:ring-2 focus:ring-amnii-gold/20"
+              />
+            </label>
+            <label className="block space-y-1">
+              <span className="text-xs text-muted-foreground">{t("maxPrice")}</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                defaultValue={current.maxPrice}
+                placeholder={t("maxPricePlaceholder")}
+                onBlur={(e) => update("maxPrice", e.target.value.replace(/[^\d]/g, ""))}
+                className="h-10 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-amnii-gold focus:ring-2 focus:ring-amnii-gold/20"
+              />
+            </label>
+          </div>
+        </fieldset>
 
         <label className="flex items-center gap-2.5">
           <input
