@@ -15,6 +15,7 @@ import {
 import { AgentReviewForm } from "@/components/agents/agent-review-form";
 import { AmniiListingCard } from "@/components/amnii/listing-card";
 import { FavoriteButton } from "@/components/amnii/favorite-button";
+import { ListingManagePanel } from "@/components/listings/listing-manage-panel";
 import { ListingReportButton } from "@/components/listings/listing-report-button";
 import { RecordListingView } from "@/components/listings/record-listing-view";
 import { ShareListingButton } from "@/components/listings/share-listing-button";
@@ -22,6 +23,10 @@ import { TrackContactLink } from "@/components/listings/track-contact-link";
 import { buttonVariants } from "@/components/ui/button";
 import { getListingById, getListingImages, getListings } from "@/lib/data/listings";
 import { getListingSourceLabel, resolveListingContact } from "@/lib/listing-contact";
+import {
+  canViewListingDetail,
+  resolveListingManagerAccess,
+} from "@/lib/listing-access";
 import { formatListingType, formatPrice } from "@/lib/format";
 import { getListingImage } from "@/lib/images";
 import { createClient } from "@/lib/supabase/server";
@@ -44,32 +49,42 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
     data: { user },
   } = await supabase.auth.getUser();
 
+  const managerAccess = await resolveListingManagerAccess(supabase, user?.id, listing);
+  if (!canViewListingDetail(listing, managerAccess, user?.id)) notFound();
+
   const gallery = await getListingImages(id);
   const allListings = await getListings();
   const related = allListings.filter((l) => l.id !== id).slice(0, 3);
   const mainImage = getListingImage(listing.propertyType, listing.imageUrl);
   const galleryImages = gallery.length > 0 ? gallery : [mainImage];
   const contact = resolveListingContact(listing, t);
+  const isOwner = user?.id === listing.ownerId;
+  const isPending = listing.status === "pending";
+  const isPublicActive = listing.status === "active";
+  const canManage = managerAccess.canManage && managerAccess.role;
   const showAgentReview =
-    listing.status === "active" &&
+    isPublicActive &&
     listing.listingType === "rent" &&
     listing.listingSource === "agent_managed" &&
     listing.agentId;
 
-  const isOwner = user?.id === listing.ownerId;
-  const isPending = listing.status === "pending";
-
   return (
     <div className="bg-white">
-      {listing.status === "active" ? <RecordListingView listingId={listing.id} /> : null}
+      {isPublicActive ? <RecordListingView listingId={listing.id} /> : null}
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {isPending ? (
           <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
             <p className="font-semibold text-amber-900">{t("pendingReview")}</p>
             <p className="mt-1 text-sm text-amber-800">{t("pendingReviewDesc")}</p>
-            {isOwner ? (
+            {isOwner || canManage ? (
               <p className="mt-2 text-xs text-amber-700">{t("pendingOwnerOnly")}</p>
             ) : null}
+          </div>
+        ) : null}
+        {!isPublicActive && canManage ? (
+          <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
+            <p className="font-semibold text-slate-900">{t("offMarketBanner")}</p>
+            <p className="mt-1 text-sm text-slate-700">{t("offMarketBannerDesc")}</p>
           </div>
         ) : null}
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -191,6 +206,22 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
           {/* Right — description fills the space, then contact */}
           <aside className="flex flex-col gap-4 lg:sticky lg:top-24">
+            {canManage ? (
+              <ListingManagePanel
+                listingId={listing.id}
+                title={listing.title}
+                description={listing.description}
+                status={listing.status}
+                listingType={listing.listingType}
+                managerRole={managerAccess.role!}
+                redirectAfterDelete={
+                  managerAccess.role === "agent"
+                    ? "/portal/agent/listings"
+                    : "/portal/owner/listings"
+                }
+              />
+            ) : null}
+
             <div className="flex-1 rounded-2xl border border-border bg-amnii-cream/30 p-6">
               <h2 className="font-heading text-lg font-bold text-amnii-navy">{t("description")}</h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
@@ -216,60 +247,66 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
               ) : null}
             </div>
 
-            <div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="font-heading text-lg font-bold text-amnii-navy">
-                {contact.label}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("contactFree")}
-              </p>
+            {isPublicActive ? (
+              <div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
+                <h2 className="font-heading text-lg font-bold text-amnii-navy">
+                  {contact.label}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t("contactFree")}
+                </p>
 
-              <div className="mt-5 space-y-3">
-                <TrackContactLink
-                  listingId={listing.id}
-                  type="contact_phone"
-                  href={`tel:${contact.phone}`}
-                  className={cn(
-                    buttonVariants(),
-                    "h-11 w-full gap-2 bg-amnii-navy text-white hover:bg-amnii-navy/90",
-                  )}
-                >
-                  <Phone className="size-4" aria-hidden="true" />
-                  {contact.phone}
-                </TrackContactLink>
-                {contact.whatsapp ? (
+                <div className="mt-5 space-y-3">
                   <TrackContactLink
                     listingId={listing.id}
-                    type="contact_whatsapp"
-                    href={`https://wa.me/${contact.whatsapp.replace(/\D/g, "")}`}
+                    type="contact_phone"
+                    href={`tel:${contact.phone}`}
                     className={cn(
-                      buttonVariants({ variant: "outline" }),
-                      "h-11 w-full gap-2 border-green-600 text-green-700 hover:bg-green-50",
+                      buttonVariants(),
+                      "h-11 w-full gap-2 bg-amnii-navy text-white hover:bg-amnii-navy/90",
                     )}
                   >
-                    <MessageCircle className="size-4" aria-hidden="true" />
-                    {t("whatsapp")}
+                    <Phone className="size-4" aria-hidden="true" />
+                    {contact.phone}
                   </TrackContactLink>
-                ) : null}
-                {contact.secondary ? (
-                  <div className="border-t border-border pt-3">
-                    <p className="mb-2 text-xs font-medium text-muted-foreground">
-                      {contact.secondary.label}
-                    </p>
-                    <a
-                      href={`tel:${contact.secondary.phone}`}
+                  {contact.whatsapp ? (
+                    <TrackContactLink
+                      listingId={listing.id}
+                      type="contact_whatsapp"
+                      href={`https://wa.me/${contact.whatsapp.replace(/\D/g, "")}`}
                       className={cn(
                         buttonVariants({ variant: "outline" }),
-                        "h-10 w-full gap-2 text-sm",
+                        "h-11 w-full gap-2 border-green-600 text-green-700 hover:bg-green-50",
                       )}
                     >
-                      <Phone className="size-4" aria-hidden="true" />
-                      {contact.secondary.phone}
-                    </a>
-                  </div>
-                ) : null}
+                      <MessageCircle className="size-4" aria-hidden="true" />
+                      {t("whatsapp")}
+                    </TrackContactLink>
+                  ) : null}
+                  {contact.secondary ? (
+                    <div className="border-t border-border pt-3">
+                      <p className="mb-2 text-xs font-medium text-muted-foreground">
+                        {contact.secondary.label}
+                      </p>
+                      <a
+                        href={`tel:${contact.secondary.phone}`}
+                        className={cn(
+                          buttonVariants({ variant: "outline" }),
+                          "h-10 w-full gap-2 text-sm",
+                        )}
+                      >
+                        <Phone className="size-4" aria-hidden="true" />
+                        {contact.secondary.phone}
+                      </a>
+                    </div>
+                  ) : null}
+                </div>
               </div>
-            </div>
+            ) : canManage ? (
+              <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-5 text-sm text-muted-foreground">
+                {t("contactHiddenOffMarket")}
+              </div>
+            ) : null}
 
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
               <div className="flex gap-3">

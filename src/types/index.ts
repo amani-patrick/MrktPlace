@@ -4,7 +4,14 @@ export type PropertyType = (typeof PROPERTY_TYPES)[number];
 export type ListingType = (typeof LISTING_TYPES)[number];
 export type UserRole = (typeof USER_ROLES)[number];
 
-export type ListingStatus = "draft" | "pending" | "active" | "paused" | "rejected";
+export type ListingStatus =
+  | "draft"
+  | "pending"
+  | "active"
+  | "paused"
+  | "rejected"
+  | "rented"
+  | "unlisted";
 export type VerificationStatus = "unverified" | "pending" | "verified" | "rejected";
 export type ListingSource = "owner_direct" | "agent_managed";
 export type ContactDisplay = "owner" | "agent" | "both";

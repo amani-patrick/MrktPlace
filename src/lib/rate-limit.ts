@@ -6,6 +6,9 @@ export const RATE_LIMITS = {
   listing_report: { max: 10, windowMinutes: 24 * 60 },
   feedback: { max: 3, windowMinutes: 24 * 60 },
   create_listing: { max: 10, windowMinutes: 24 * 60 },
+  listing_status_update: { max: 30, windowMinutes: 24 * 60 },
+  listing_description_update: { max: 40, windowMinutes: 24 * 60 },
+  listing_delete: { max: 10, windowMinutes: 24 * 60 },
   favorite_toggle: { max: 60, windowMinutes: 60 },
 } as const;
 
